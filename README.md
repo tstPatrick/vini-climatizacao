@@ -33,12 +33,17 @@ Login do técnico na demonstração: `tecnico@vini.app` / `vini123` (rota `#/tec
 A regra "dois clientes nunca no mesmo horário" é garantida pelo próprio banco
 (restrição `sem_conflito` + validação em `validar_horario`), não só pela tela.
 
-## Publicar (GitHub Pages)
+## Publicar (Cloudflare Pages)
 
-O workflow `.github/workflows/deploy.yml` testa, gera e publica a cada push na `main`.
-Uma vez só: **Settings → Pages → Source: GitHub Actions**.
-Endereço: `https://<usuario>.github.io/vini-climatizacao/`.
-Também funciona em Vercel/Netlify (comando `npm run build`, pasta `dist`).
+Na Cloudflare: **Workers & Pages → Create → Pages → Connect to Git** → escolha `vini-climatizacao`.
+
+- Framework preset: **Vite** (ou "None")
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Environment variables: `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (do Supabase)
+
+A cada push na `main` a Cloudflare publica sozinha. Sem as variáveis, o site abre em modo demonstração.
+Também há um workflow manual para GitHub Pages em `.github/workflows/deploy.yml`.
 
 ## O que tem na v1.0
 

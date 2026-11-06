@@ -1,8 +1,7 @@
-name: Publicar no GitHub Pages
+name: Publicar no GitHub Pages (opcional, manual)
 
+# O site oficial é publicado pela Cloudflare. Este workflow só roda se for acionado à mão.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
