@@ -33,14 +33,14 @@ Login do técnico na demonstração: `tecnico@vini.app` / `vini123` (rota `#/tec
 A regra "dois clientes nunca no mesmo horário" é garantida pelo próprio banco
 (restrição `sem_conflito` + validação em `validar_horario`), não só pela tela.
 
-## Publicar (Cloudflare Pages)
+## Publicar (Cloudflare)
 
-Na Cloudflare: **Workers & Pages → Create → Pages → Connect to Git** → escolha `vini-climatizacao`.
+Na Cloudflare: **Workers & Pages → Create application → Import a repository** → `vini-climatizacao`.
 
-- Framework preset: **Vite** (ou "None")
 - Build command: `npm run build`
-- Build output directory: `dist`
-- Environment variables: `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (do Supabase)
+- Deploy command: `npx wrangler deploy` (usa o arquivo `wrangler.jsonc`)
+- **Build variables** (em *Advanced settings*, ou depois em *Settings → Build → Variables and secrets*):
+  `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (do Supabase)
 
 A cada push na `main` a Cloudflare publica sozinha. Sem as variáveis, o site abre em modo demonstração.
 Também há um workflow manual para GitHub Pages em `.github/workflows/deploy.yml`.
