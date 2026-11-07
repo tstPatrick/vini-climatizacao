@@ -175,6 +175,15 @@ export function useAcao() {
   return { ocupado, erro, setErro, rodar }
 }
 
+/** Versão do app e assinatura, discretas, no fim das telas principais. */
+export function RodapeVersao() {
+  return (
+    <p className="rodape-versao">
+      Versão {__VERSAO_APP__} · By <b>Docseg Digital</b>
+    </p>
+  )
+}
+
 export function FaixaOffline() {
   const [online, setOnline] = useState(navigator.onLine)
   useEffect(() => {

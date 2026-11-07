@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
 import { AtivarAvisos } from '../../components/Avisos'
-import { Cabecalho, Carregando, Erro, Modal, useAcao } from '../../components/ui'
+import { Cabecalho, Carregando, Erro, Modal, RodapeVersao, useAcao } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { Ajustes, Bloqueio, Disponibilidade, Servico } from '../../data/types'
 import { formatarWhats, mascaraWhats, moeda } from '../../lib/formato'
@@ -347,6 +347,8 @@ export function AjustesTecnico() {
           </section>
         </div>
       </div>
+
+      <RodapeVersao />
 
       {novoBloqueio && (
         <ModalBloqueio

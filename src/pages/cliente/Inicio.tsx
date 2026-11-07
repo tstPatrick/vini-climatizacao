@@ -2,7 +2,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
-import { ChipStatus, Erro, useAcao } from '../../components/ui'
+import { ChipStatus, Erro, RodapeVersao, useAcao } from '../../components/ui'
 import { useEstado, salvarRascunho } from '../../estado'
 import { STATUS_ATIVOS } from '../../data/types'
 import { chaveDia, horaDe, relativoDia } from '../../lib/tempo'
@@ -26,6 +26,7 @@ export function Abertura() {
         </Link>
       </div>
       <BotaoInstalar classe="btn-link" />
+      <RodapeVersao />
     </main>
   )
 }

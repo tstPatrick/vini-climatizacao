@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
 import { AtivarAvisos } from '../../components/Avisos'
-import { Cabecalho, Carregando, ChipStatus, Erro, Modal, useAcao } from '../../components/ui'
+import { Cabecalho, Carregando, ChipStatus, Erro, Modal, RodapeVersao, useAcao } from '../../components/ui'
 import { salvarRascunho, useEstado } from '../../estado'
 import { STATUS_ATIVOS, type AgendamentoDetalhado } from '../../data/types'
 import { aparelhoTexto, enderecoTexto, formatarWhats, moeda } from '../../lib/formato'
@@ -269,6 +269,7 @@ export function Perfil() {
       <Link className="btn-link peq" to="/tecnico" style={{ color: 'var(--texto-2)' }}>
         Área do técnico
       </Link>
+      <RodapeVersao />
       <Modal titulo="Sair deste aparelho?" aberto={sair} fechar={() => setSair(false)}>
         <p className="mutado">Seus agendamentos continuam salvos. Para voltar, use "Já tenho conta" com seu WhatsApp.</p>
         <button

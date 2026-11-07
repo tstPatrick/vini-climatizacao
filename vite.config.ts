@@ -2,12 +2,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json'
 
 // VITE_BASE permite publicar numa subpasta (ex.: GitHub Pages "/vini-climatizacao/").
 const base = process.env.VITE_BASE || '/'
 
 export default defineConfig({
   base,
+  define: { __VERSAO_APP__: JSON.stringify(pkg.version) },
   plugins: [
     react(),
     VitePWA({

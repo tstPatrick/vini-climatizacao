@@ -12,6 +12,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
     "types": ["vite/client", "vite-plugin-pwa/client"]
   },
   "include": ["src"]

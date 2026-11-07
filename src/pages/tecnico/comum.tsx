@@ -3,7 +3,7 @@ import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-d
 import { Icone } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
 import { useSincronizarPush } from '../../components/Avisos'
-import { BarraNav, Carregando, Erro, Modal, useAcao } from '../../components/ui'
+import { BarraNav, Carregando, Erro, Modal, useAcao, RodapeVersao } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { AgendamentoDetalhado } from '../../data/types'
 import { DEMO_EMAIL, DEMO_SENHA } from '../../data/localApi'
@@ -129,6 +129,7 @@ export function LoginTecnico() {
           Voltar ao início
         </Link>
       </form>
+      <RodapeVersao />
     </main>
   )
 }
