@@ -158,7 +158,7 @@ begin
 end $$;
 
 create or replace function normalizar_whats(w text) returns text
-language sql immutable as $$
+language sql immutable set search_path = public as $$
   select case when length(d) in (10, 11) then '55' || d else d end
   from (select regexp_replace(coalesce(w, ''), '\D', '', 'g') d) x;
 $$;
@@ -516,9 +516,41 @@ create policy publico_le on disponibilidade for select to anon, authenticated us
 drop policy if exists publico_le on ajustes;
 create policy publico_le on ajustes for select to anon, authenticated using (true);
 
--- Funções internas não ficam expostas para o público.
-revoke execute on function validar_horario(text, timestamptz, uuid) from public, anon;
-revoke execute on function agendamento_json(agendamentos) from public, anon;
-revoke execute on function perfil_json(uuid) from public, anon;
-revoke execute on function retorno_json(retornos) from public, anon;
-revoke execute on function cliente_do_token(uuid) from public, anon;
+-- ---------------------------------------------------------------------
+-- Permissões das funções
+-- Internas: só usadas por dentro das outras funções (ninguém chama pela API).
+-- Do técnico: só quem está logado (e elas ainda conferem se é o técnico).
+-- Do cliente: públicas, é assim que o cliente agenda sem senha.
+-- ---------------------------------------------------------------------
+revoke execute on function validar_horario(text, timestamptz, uuid) from public, anon, authenticated;
+revoke execute on function agendamento_json(agendamentos) from public, anon, authenticated;
+revoke execute on function perfil_json(uuid) from public, anon, authenticated;
+revoke execute on function retorno_json(retornos) from public, anon, authenticated;
+revoke execute on function cliente_do_token(uuid) from public, anon, authenticated;
+revoke execute on function deslocamento() from public, anon, authenticated;
+revoke execute on function normalizar_whats(text) from public, anon, authenticated;
+revoke execute on function exigir_tecnico() from public, anon, authenticated;
+
+revoke execute on function eh_tecnico() from public, anon;
+grant execute on function eh_tecnico() to authenticated;
+
+do $$
+declare f text;
+begin
+  foreach f in array array[
+    'tec_agendamentos(timestamptz, timestamptz)', 'tec_agendamento(uuid)', 'tec_status(uuid, text)',
+    'tec_remarcar(uuid, timestamptz)', 'tec_concluir(uuid, text, text, numeric, text[])',
+    'tec_clientes()', 'tec_cliente(uuid)', 'tec_retornos()']
+  loop
+    execute format('revoke execute on function %s from public, anon', f);
+    execute format('grant execute on function %s to authenticated', f);
+  end loop;
+  foreach f in array array[
+    'horarios_ocupados(timestamptz, timestamptz)', 'entrar_cliente(text)', 'perfil_cliente(uuid)',
+    'salvar_dados_cliente(uuid, jsonb)', 'criar_agendamento(uuid, text, uuid, uuid, timestamptz, text)',
+    'cliente_responder_remarcacao(uuid, uuid, boolean)', 'cliente_remarcar(uuid, uuid, timestamptz)',
+    'cliente_cancelar(uuid, uuid)']
+  loop
+    execute format('grant execute on function %s to anon, authenticated', f);
+  end loop;
+end $$;
