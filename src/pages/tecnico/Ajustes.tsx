@@ -270,27 +270,31 @@ export function AjustesTecnico() {
             <div className="tabela-horas">
               {[1, 2, 3, 4, 5, 6, 0].map((dia) => (
                 <div key={dia} className="linha-dia">
-                  <span className="forte" style={{ paddingTop: 10 }}>{DIAS_LONGOS[dia]}</span>
-                  <div className="faixas">
-                    {faixas(dia).length === 0 && <span className="mutado" style={{ paddingTop: 10 }}>Folga</span>}
-                    {faixas(dia).map((f) => (
-                      <div key={f.i} className="faixa-hora">
-                        <input type="time" className="entrada" aria-label={`${DIAS_LONGOS[dia]} início`} value={f.hora_inicio} onChange={(e) => mudarFaixa(f.i, 'hora_inicio', e.target.value)} />
-                        <span>–</span>
-                        <input type="time" className="entrada" aria-label={`${DIAS_LONGOS[dia]} fim`} value={f.hora_fim} onChange={(e) => mudarFaixa(f.i, 'hora_fim', e.target.value)} />
-                        <button className="btn-icone sem-borda" aria-label={`Remover faixa de ${DIAS_LONGOS[dia]}`} onClick={() => setDisp(disp.filter((_, j) => j !== f.i))}>
-                          <Icone nome="fechar" tamanho={20} />
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      className="btn-link peq"
-                      style={{ alignSelf: 'flex-start', padding: '4px 0' }}
-                      onClick={() => setDisp([...disp, { dia_semana: dia, hora_inicio: faixas(dia).length ? '13:00' : '08:00', hora_fim: faixas(dia).length ? '18:00' : '12:00' }])}
-                    >
-                      <Icone nome="mais" tamanho={16} /> Adicionar faixa
-                    </button>
+                  <div className="linha entre">
+                    <span className="forte">{DIAS_LONGOS[dia]}</span>
+                    {faixas(dia).length === 0 && <span className="chip neutro">Folga</span>}
                   </div>
+                  {faixas(dia).map((f) => (
+                    <div key={f.i} className="faixa-hora">
+                      <select className="entrada" aria-label={`${DIAS_LONGOS[dia]} início`} value={f.hora_inicio} onChange={(e) => mudarFaixa(f.i, 'hora_inicio', e.target.value)}>
+                        {opcoesHora(f.hora_inicio).map((h) => <option key={h}>{h}</option>)}
+                      </select>
+                      <span className="mutado">até</span>
+                      <select className="entrada" aria-label={`${DIAS_LONGOS[dia]} fim`} value={f.hora_fim} onChange={(e) => mudarFaixa(f.i, 'hora_fim', e.target.value)}>
+                        {opcoesHora(f.hora_fim).map((h) => <option key={h}>{h}</option>)}
+                      </select>
+                      <button className="btn-icone sem-borda" aria-label={`Remover faixa de ${DIAS_LONGOS[dia]}`} onClick={() => setDisp(disp.filter((_, j) => j !== f.i))}>
+                        <Icone nome="fechar" tamanho={20} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    className="btn-link peq"
+                    style={{ alignSelf: 'flex-start', padding: '2px 0', minHeight: 36 }}
+                    onClick={() => setDisp([...disp, { dia_semana: dia, hora_inicio: faixas(dia).length ? '13:00' : '08:00', hora_fim: faixas(dia).length ? '18:00' : '12:00' }])}
+                  >
+                    <Icone nome="mais" tamanho={16} /> {faixas(dia).length ? 'Adicionar outra faixa' : 'Atender neste dia'}
+                  </button>
                 </div>
               ))}
             </div>
@@ -376,6 +380,15 @@ export function AjustesTecnico() {
       </Modal>
     </main>
   )
+}
+
+/** Horários de 30 em 30 min (05:00 a 23:00), incluindo o valor atual se for diferente. */
+function opcoesHora(atual: string): string[] {
+  const l: string[] = []
+  for (let m = 5 * 60; m <= 23 * 60; m += 30) l.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`)
+  const a = atual.slice(0, 5)
+  if (a && !l.includes(a)) l.push(a)
+  return l.sort()
 }
 
 function textoBloqueio(b: Bloqueio) {

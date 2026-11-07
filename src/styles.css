@@ -277,11 +277,11 @@ textarea.entrada { padding: 14px 16px; min-height: 96px; resize: vertical; }
 .abertura .frase { font-size: 24px; font-weight: 800; color: var(--marinho); max-width: 280px; }
 .sucesso { width: 88px; height: 88px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; margin: 8px auto 0; }
 .foto-mini { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; }
-.tabela-horas { display: flex; flex-direction: column; gap: 10px; }
-.tabela-horas .linha-dia { display: grid; grid-template-columns: 90px 1fr; gap: 10px; align-items: start; }
-.faixas { display: flex; flex-direction: column; gap: 8px; }
-.faixa-hora { display: flex; gap: 8px; align-items: center; }
-.faixa-hora .entrada { min-height: 44px; padding: 0 10px; }
+.tabela-horas { display: flex; flex-direction: column; gap: 4px; }
+.tabela-horas .linha-dia { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid var(--borda); }
+.tabela-horas .linha-dia:first-child { border-top: 0; padding-top: 0; }
+.faixa-hora { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
+.faixa-hora .entrada { min-height: 46px; padding: 0 12px; width: 100%; min-width: 0; font-weight: 700; }
 
 /* ---------- Painel do técnico no computador ---------- */
 @media (min-width: 900px) {
