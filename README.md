@@ -67,9 +67,16 @@ horário de trabalho (seg–sex 8–12h e 13–18h, sáb 8–12h), durações (i
 manutenção 2h, carga de gás e orçamento 1h), retorno (limpeza 6 meses, manutenção 12),
 WhatsApp do técnico (`5571999999999`), região atendida e domínio.
 
+## Notificações push
+
+- Técnico recebe: novo pedido, cliente mudou horário, aceitou o novo horário ou cancelou.
+- Cliente recebe: confirmado, novo horário sugerido, cancelado.
+- Como funciona: o gatilho `notificar_agendamento` (banco) chama a Edge Function
+  `supabase/functions/notificar`, que envia o push. Chaves VAPID e segredo ficam na tabela
+  privada `notificacao_config` (não versionada). No iPhone, só com o app instalado na Tela de Início.
+
 ## Próxima fase
 
-- Notificação push ao técnico com o app fechado (tarefa agendada no servidor + Web Push).
 - Envio automático pelo WhatsApp Business API.
 - Fotos no Supabase Storage (na v1 ficam reduzidas dentro do banco).
 - Acesso do cliente com código por WhatsApp (na v1, entra só com o número).

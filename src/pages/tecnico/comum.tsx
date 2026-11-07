@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Icone } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
+import { useSincronizarPush } from '../../components/Avisos'
 import { BarraNav, Carregando, Erro, Modal, useAcao } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { AgendamentoDetalhado } from '../../data/types'
@@ -57,6 +58,8 @@ export function LayoutTecnico() {
       window.removeEventListener('vini:atualizar', verificar)
     }
   }, [api, logado, toast])
+
+  useSincronizarPush('tecnico', !!logado)
 
   if (logado === null) return <Carregando />
   if (!logado) return <Navigate to="/tecnico/login" replace state={{ de: local.pathname }} />

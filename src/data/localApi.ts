@@ -323,6 +323,10 @@ export function criarLocalApi(): Api {
       gravar(b)
     },
 
+    // Modo demonstração: sem servidor, não há push (o app mostra avisos só com ele aberto).
+    async salvarPushCliente() {},
+    async tecSalvarPush() {},
+
     async login(email, senha) {
       await espera()
       if (email.trim().toLowerCase() !== DEMO_EMAIL || senha !== DEMO_SENHA) throw new ErroApp('E-mail ou senha incorretos.')

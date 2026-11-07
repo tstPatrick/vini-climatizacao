@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
+import { AtivarAvisos } from '../../components/Avisos'
 import { Cabecalho, Carregando, Erro, Modal, useAcao } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { Ajustes, Bloqueio, Disponibilidade, Servico } from '../../data/types'
@@ -294,15 +295,17 @@ export function AjustesTecnico() {
 
           <section className="cartao coluna" aria-label="Aplicativo">
             <h2 className="subtitulo">Aplicativo</h2>
-            {permissao !== 'unsupported' && permissao !== 'granted' && (
-              <button
-                className="btn btn-secundario"
-                onClick={async () => setPermissao(await Notification.requestPermission())}
-              >
-                <Icone nome="sino" /> Ativar avisos de novos pedidos
-              </button>
+            {api.modo === 'demo' ? (
+              permissao !== 'unsupported' && permissao !== 'granted' ? (
+                <button className="btn btn-secundario" onClick={async () => setPermissao(await Notification.requestPermission())}>
+                  <Icone nome="sino" /> Ativar avisos de novos pedidos
+                </button>
+              ) : (
+                permissao === 'granted' && <p className="mutado peq">Avisos ativados (no modo demonstração, só com o app aberto).</p>
+              )
+            ) : (
+              <AtivarAvisos tipo="tecnico" mostrarAtivo />
             )}
-            {permissao === 'granted' && <p className="mutado peq">Avisos de novos pedidos ativados (com o app aberto).</p>}
             <BotaoInstalar />
             <button className="btn btn-secundario" onClick={() => nav('/inicio')}>
               <Icone nome="inicio" /> Ver app do cliente

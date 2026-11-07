@@ -33,6 +33,7 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: 'index.html',
+        importScripts: ['push-sw.js'],
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         runtimeCaching: [
           {

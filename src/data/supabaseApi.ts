@@ -70,6 +70,7 @@ export function criarSupabaseApi(url: string, chave: string): Api {
     clienteResponderRemarcacao: (token, id, aceitar) => rpc('cliente_responder_remarcacao', { p_token: token, p_id: id, p_aceitar: aceitar }),
     clienteRemarcar: (token, id, inicio) => rpc('cliente_remarcar', { p_token: token, p_id: id, p_inicio: inicio }),
     clienteCancelar: (token, id) => rpc('cliente_cancelar', { p_token: token, p_id: id }),
+    salvarPushCliente: (token, inscricao) => rpc('salvar_push_cliente', { p_token: token, p_inscricao: inscricao }),
 
     async login(email, senha) {
       const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password: senha })
@@ -104,6 +105,7 @@ export function criarSupabaseApi(url: string, chave: string): Api {
       return p && p.cliente ? { ...perfil(p)!, retornos: p.retornos } : null
     },
     tecRetornos: () => rpc('tec_retornos'),
+    tecSalvarPush: (inscricao) => rpc('tec_salvar_push', { p_inscricao: inscricao }),
     async tecAtualizarRetorno(id, status) {
       await ok(sb.from('retornos').update({ status }).eq('id', id))
     },

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
+import { AtivarAvisos } from '../../components/Avisos'
 import { CampoFoto, Cabecalho, Carregando, Erro, useAcao } from '../../components/ui'
 import { useEstado, useRascunho } from '../../estado'
 import type { AgendamentoDetalhado, Aparelho, Endereco } from '../../data/types'
@@ -338,6 +339,7 @@ export function Confirmacao() {
         <h1 className="titulo marinho" style={{ marginTop: 8 }}>Agendado!</h1>
         <p className="mutado">Você vai receber a confirmação no WhatsApp.</p>
       </div>
+      <AtivarAvisos tipo="cliente" />
       <ResumoAgendamento a={a} />
       <CartaoTecnico a={a} />
       <BotaoCalendario a={a} />

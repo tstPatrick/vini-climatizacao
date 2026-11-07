@@ -1,6 +1,7 @@
 import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { BarraNav, FaixaOffline } from './components/ui'
 import { ProvedorEstado, useEstado } from './estado'
+import { useSincronizarPush } from './components/Avisos'
 import { MODO_DEMO } from './data/api'
 import { Abertura, Entrar, Inicio } from './pages/cliente/Inicio'
 import { Confirmacao, DadosCliente, EscolherHorario, EscolherServico } from './pages/cliente/Agendar'
@@ -13,6 +14,7 @@ import { AjustesTecnico, ServicosTecnico } from './pages/tecnico/Ajustes'
 
 function LayoutCliente() {
   const { perfil } = useEstado()
+  useSincronizarPush('cliente', !!perfil)
   const avisos = perfil?.agendamentos.filter((a) => a.status === 'remarcado').length ?? 0
   return (
     <>

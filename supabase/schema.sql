@@ -554,3 +554,97 @@ begin
     execute format('grant execute on function %s to anon, authenticated', f);
   end loop;
 end $$;
+
+-- =====================================================================
+-- Notificações push (técnico: novo pedido; cliente: confirmação etc.)
+-- O gatilho chama a Edge Function "notificar" (supabase/functions/notificar).
+-- As chaves ficam na tabela privada notificacao_config (preencher à parte).
+-- =====================================================================
+
+create extension if not exists pg_net;
+
+alter table ajustes add column if not exists vapid_publica text not null default '';
+
+create table if not exists push_inscricoes (
+  endpoint text primary key,
+  p256dh text not null,
+  auth text not null,
+  cliente_id uuid references clientes (id) on delete cascade,
+  tecnico boolean not null default false,
+  criado_em timestamptz not null default now()
+);
+
+create table if not exists notificacao_config (
+  id int primary key default 1 check (id = 1),
+  url_funcao text,
+  segredo text,
+  vapid_publica text,
+  vapid_privada text,
+  contato text
+);
+
+alter table push_inscricoes enable row level security;
+alter table notificacao_config enable row level security;
+revoke all on push_inscricoes from anon, authenticated;
+revoke all on notificacao_config from anon, authenticated;
+
+create or replace function salvar_push_cliente(p_token uuid, p_inscricao jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+declare v_cliente uuid := cliente_do_token(p_token);
+begin
+  insert into push_inscricoes (endpoint, p256dh, auth, cliente_id)
+  values (p_inscricao ->> 'endpoint', p_inscricao -> 'keys' ->> 'p256dh', p_inscricao -> 'keys' ->> 'auth', v_cliente)
+  on conflict (endpoint) do update set p256dh = excluded.p256dh, auth = excluded.auth, cliente_id = excluded.cliente_id;
+end $$;
+
+create or replace function tec_salvar_push(p_inscricao jsonb) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  perform exigir_tecnico();
+  insert into push_inscricoes (endpoint, p256dh, auth, tecnico)
+  values (p_inscricao ->> 'endpoint', p_inscricao -> 'keys' ->> 'p256dh', p_inscricao -> 'keys' ->> 'auth', true)
+  on conflict (endpoint) do update set p256dh = excluded.p256dh, auth = excluded.auth, tecnico = true;
+end $$;
+
+-- Decide quem avisar e chama a Edge Function. Nunca impede o agendamento se falhar.
+create or replace function notificar_agendamento() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_evento text;
+  c notificacao_config;
+  v_cliente_agindo boolean := auth.uid() is null; -- cliente não tem login
+begin
+  if tg_op = 'INSERT' then
+    v_evento := 'novo';
+  elsif new.status is distinct from old.status or new.inicio is distinct from old.inicio then
+    v_evento := case
+      when new.status = 'confirmado' and v_cliente_agindo then 'cliente_aceitou'
+      when new.status = 'confirmado' then 'confirmado'
+      when new.status = 'remarcado' then 'remarcado'
+      when new.status = 'cancelado' and v_cliente_agindo then 'cancelado_pelo_cliente'
+      when new.status = 'cancelado' then 'cancelado'
+      when new.status = 'pendente' and v_cliente_agindo then 'mudou_horario'
+      else null end;
+  end if;
+  if v_evento is null then return new; end if;
+  select * into c from notificacao_config where id = 1;
+  if c.url_funcao is null or c.segredo is null then return new; end if;
+  perform net.http_post(
+    url := c.url_funcao,
+    body := jsonb_build_object('agendamento_id', new.id, 'evento', v_evento),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'x-vini-segredo', c.segredo)
+  );
+  return new;
+exception when others then
+  return new;
+end $$;
+
+drop trigger if exists notificar_agendamento on agendamentos;
+create trigger notificar_agendamento after insert or update on agendamentos
+  for each row execute function notificar_agendamento();
+
+revoke execute on function notificar_agendamento() from public, anon, authenticated;
+revoke execute on function salvar_push_cliente(uuid, jsonb) from public;
+grant execute on function salvar_push_cliente(uuid, jsonb) to anon, authenticated;
+revoke execute on function tec_salvar_push(jsonb) from public, anon;
+grant execute on function tec_salvar_push(jsonb) to authenticated;

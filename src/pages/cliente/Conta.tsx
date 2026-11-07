@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
+import { AtivarAvisos } from '../../components/Avisos'
 import { Cabecalho, Carregando, ChipStatus, Erro, Modal, useAcao } from '../../components/ui'
 import { salvarRascunho, useEstado } from '../../estado'
 import { STATUS_ATIVOS, type AgendamentoDetalhado } from '../../data/types'
@@ -258,6 +259,7 @@ export function Perfil() {
           <p className="mutado peq centro">Cliente desde {dataCurta(chaveDia(perfil.cliente.criado_em))}</p>
         </>
       )}
+      {perfil && <AtivarAvisos tipo="cliente" mostrarAtivo />}
       <BotaoInstalar />
       {perfil && (
         <button className="btn-link" onClick={() => setSair(true)}>

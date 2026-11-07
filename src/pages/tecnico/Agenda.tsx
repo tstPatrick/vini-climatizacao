@@ -7,6 +7,7 @@ import type { AgendamentoDetalhado } from '../../data/types'
 import { chaveDia, dataLonga, DIAS_LONGOS, diaSemana, hojeChave, horaDe, inicioSemana, relativoDia, somarDias } from '../../lib/tempo'
 import { linkWhats, mensagens } from '../../lib/whatsapp'
 import { useAcoesAgendamento } from './comum'
+import { AtivarAvisos } from '../../components/Avisos'
 
 const inicioDoDia = (d: string) => new Date(`${d}T00:00:00-03:00`).toISOString()
 
@@ -82,6 +83,8 @@ export function AgendaTecnico() {
           {pendentes > 0 && <span className="chip atencao">{pendentes} pendente{pendentes === 1 ? '' : 's'}</span>}
         </div>
       )}
+
+      <AtivarAvisos tipo="tecnico" />
 
       {amanha.length > 0 && (
         <button className="cartao clicavel linha" onClick={() => setLembretes(true)}>

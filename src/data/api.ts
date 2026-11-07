@@ -37,6 +37,8 @@ export interface Api {
   clienteResponderRemarcacao(token: string, id: string, aceitar: boolean): Promise<void>
   clienteRemarcar(token: string, id: string, inicio: string): Promise<void>
   clienteCancelar(token: string, id: string): Promise<void>
+  /** Registra este aparelho para receber notificações (null no modo demonstração). */
+  salvarPushCliente(token: string, inscricao: PushSubscriptionJSON): Promise<void>
 
   // Técnico
   login(email: string, senha: string): Promise<void>
@@ -51,6 +53,7 @@ export interface Api {
   tecClientes(): Promise<ClienteResumo[]>
   tecCliente(id: string): Promise<(PerfilCliente & { retornos: RetornoDetalhado[] }) | null>
   tecRetornos(): Promise<RetornoDetalhado[]>
+  tecSalvarPush(inscricao: PushSubscriptionJSON): Promise<void>
   tecAtualizarRetorno(id: string, status: StatusRetorno): Promise<void>
   tecServicos(): Promise<Servico[]>
   tecSalvarServico(s: Servico): Promise<void>

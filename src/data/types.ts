@@ -90,6 +90,8 @@ export interface Ajustes {
   antecedencia_minima_horas: number
   dias_a_frente: number
   passo_min: number
+  /** Chave pública das notificações push (vem do servidor). */
+  vapid_publica?: string
 }
 
 /** Intervalo ocupado (agendamento ativo já com o deslocamento somado, ou bloqueio). */
