@@ -160,7 +160,10 @@ function LinhaDoTempo({ lista, acoes }: { lista: AgendamentoDetalhado[]; acoes: 
           <div className="cartao p coluna">
             <Link to={`/tecnico/agendamento/${a.id}`} className="coluna p" style={{ color: 'inherit', textDecoration: 'none' }}>
               <div className="linha entre" style={{ alignItems: 'flex-start' }}>
-                <strong>{a.servico.nome}</strong>
+                <strong>
+                  {a.servico.nome}
+                  {(a.quantidade ?? 1) > 1 ? ` · ${a.quantidade} aparelhos` : ''}
+                </strong>
                 <ChipStatus status={a.status} />
               </div>
               <span>{a.cliente.nome}</span>

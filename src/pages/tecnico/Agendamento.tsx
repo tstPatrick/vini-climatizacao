@@ -54,6 +54,7 @@ export function DetalheAgendamentoTec() {
               </span>
               <div className="cresce coluna p">
                 <strong className="subtitulo">{a.servico.nome}</strong>
+                {(a.quantidade ?? 1) > 1 && <span className="chip" style={{ alignSelf: 'flex-start' }}>{a.quantidade} aparelhos</span>}
                 <span className="mutado">{dataLonga(chaveDia(a.inicio))}</span>
                 <span className="forte">
                   {horaDe(a.inicio)} – {horaDe(a.fim)}

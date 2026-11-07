@@ -8,14 +8,16 @@ export function linkWhats(numero: string, texto: string): string {
   return `https://wa.me/${normalizarWhats(numero)}?text=${encodeURIComponent(texto)}`
 }
 
+const servicoTexto = (a: AgendamentoDetalhado) =>
+  (a.quantidade ?? 1) > 1 ? `${a.servico.nome} (${a.quantidade} aparelhos)` : a.servico.nome
 const quando = (a: AgendamentoDetalhado) => `${dataLonga(chaveDia(a.inicio)).toLowerCase()}, às ${horaDe(a.inicio)}`
 const assinatura = '\n\n— Vini Climatização'
 
 export const mensagens = {
   confirmacao: (a: AgendamentoDetalhado) =>
-    `Olá, ${primeiroNome(a.cliente.nome)}! Seu agendamento de *${a.servico.nome}* está *confirmado* para ${quando(a)}.\nEndereço: ${a.endereco.rua}, ${a.endereco.numero} - ${a.endereco.bairro}.${assinatura}`,
+    `Olá, ${primeiroNome(a.cliente.nome)}! Seu agendamento de *${servicoTexto(a)}* está *confirmado* para ${quando(a)}.\nEndereço: ${a.endereco.rua}, ${a.endereco.numero} - ${a.endereco.bairro}.${assinatura}`,
   lembrete: (a: AgendamentoDetalhado) =>
-    `Olá, ${primeiroNome(a.cliente.nome)}! Passando para lembrar do seu serviço de *${a.servico.nome}* amanhã (${quando(a)}). Qualquer imprevisto, é só avisar por aqui.${assinatura}`,
+    `Olá, ${primeiroNome(a.cliente.nome)}! Passando para lembrar do seu serviço de *${servicoTexto(a)}* amanhã (${quando(a)}). Qualquer imprevisto, é só avisar por aqui.${assinatura}`,
   remarcacao: (a: AgendamentoDetalhado, link: string) =>
     `Olá, ${primeiroNome(a.cliente.nome)}! Não vou conseguir atender no horário escolhido. Sugiro *${quando(a)}* para a ${a.servico.nome.toLowerCase()}. Pode aceitar ou escolher outro horário no app: ${link}${assinatura}`,
   cancelamento: (a: AgendamentoDetalhado, link: string) =>

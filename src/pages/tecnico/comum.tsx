@@ -194,7 +194,7 @@ export function ModalRemarcar({
         Atual: {dataHoraLonga(agendamento.inicio)}
       </p>
       <SeletorHorario
-        duracaoMin={agendamento.servico.duracao_min}
+        duracaoMin={Math.round((new Date(agendamento.fim).getTime() - new Date(agendamento.inicio).getTime()) / 60_000)}
         valor={inicio}
         mudar={setInicio}
         ignorar={{ inicio: agendamento.inicio, fim: agendamento.fim }}

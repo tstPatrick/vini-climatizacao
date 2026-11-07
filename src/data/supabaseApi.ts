@@ -66,6 +66,7 @@ export function criarSupabaseApi(url: string, chave: string): Api {
         p_aparelho: n.aparelho_id,
         p_inicio: n.inicio,
         p_observacao: n.observacao_cliente,
+        p_quantidade: n.quantidade ?? 1,
       }),
     clienteResponderRemarcacao: (token, id, aceitar) => rpc('cliente_responder_remarcacao', { p_token: token, p_id: id, p_aceitar: aceitar }),
     clienteRemarcar: (token, id, inicio) => rpc('cliente_remarcar', { p_token: token, p_id: id, p_inicio: inicio }),

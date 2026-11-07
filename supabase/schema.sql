@@ -115,11 +115,23 @@ create table if not exists ajustes (
   id int primary key default 1 check (id = 1),
   whatsapp_tecnico text not null default '',
   nome_tecnico text not null default 'Vinícius',
-  intervalo_deslocamento_min int not null default 30 check (intervalo_deslocamento_min between 0 and 240),
+  intervalo_deslocamento_min int not null default 60 check (intervalo_deslocamento_min between 0 and 240),
   antecedencia_minima_horas int not null default 12 check (antecedencia_minima_horas between 0 and 720),
   dias_a_frente int not null default 30 check (dias_a_frente between 1 and 365),
   passo_min int not null default 60 check (passo_min between 15 and 240)
 );
+
+-- Vários aparelhos na mesma visita e tempo extra para aparelho grande.
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_name = 'servicos' and column_name = 'duracao_adicional_min') then
+    alter table servicos add column duracao_adicional_min int not null default 60 check (duracao_adicional_min between 0 and 720);
+    alter table servicos add column extra_grande_min int not null default 0 check (extra_grande_min between 0 and 240);
+    -- marca para preencher os padrões depois que os serviços existirem
+    create temp table if not exists _preencher_padroes (x int);
+  end if;
+end $$;
+alter table agendamentos add column if not exists quantidade int not null default 1 check (quantidade between 1 and 6);
 
 -- ---------------------------------------------------------------------
 -- Dados iniciais (editáveis no painel do técnico)
@@ -134,6 +146,17 @@ insert into servicos (id, nome, descricao, duracao_min, intervalo_retorno_meses,
 on conflict (id) do nothing;
 
 insert into ajustes (id, whatsapp_tecnico) values (1, '5571999999999') on conflict (id) do nothing;
+
+do $$
+begin
+  if to_regclass('pg_temp._preencher_padroes') is not null then
+    update servicos s set duracao_adicional_min = v.adicional, extra_grande_min = v.extra
+    from (values ('instalacao', 120, 30), ('limpeza', 45, 15), ('manutencao', 60, 15), ('carga-gas', 30, 15), ('orcamento', 15, 0))
+      v(id, adicional, extra)
+    where s.id = v.id;
+    drop table pg_temp._preencher_padroes;
+  end if;
+end $$;
 
 insert into disponibilidade (dia_semana, hora_inicio, hora_fim)
 select d, h.i, h.f
@@ -163,13 +186,28 @@ language sql immutable set search_path = public as $$
   from (select regexp_replace(coalesce(w, ''), '\D', '', 'g') d) x;
 $$;
 
+-- Tempo da visita: 1º aparelho = duração; cada um a mais = duração adicional;
+-- aparelho grande (18 mil BTUs ou mais) soma o extra em cada unidade. Igual a src/lib/horarios.ts.
+create or replace function duracao_visita(p_servico text, p_quantidade int, p_aparelho uuid)
+returns int
+language sql stable security definer set search_path = public as $$
+  select s.duracao_min + x.extra + (least(greatest(coalesce(p_quantidade, 1), 1), 6) - 1) * (s.duracao_adicional_min + x.extra)
+  from servicos s
+  cross join lateral (
+    select case when (select btus from aparelhos where id = p_aparelho) >= 18000 then s.extra_grande_min else 0 end as extra
+  ) x
+  where s.id = p_servico;
+$$;
+
 -- Valida se o horário pode ser reservado (mesma regra do app: src/lib/horarios.ts).
-create or replace function validar_horario(p_servico text, p_inicio timestamptz, p_ignorar uuid default null)
+drop function if exists validar_horario(text, timestamptz, uuid);
+create or replace function validar_horario(p_servico text, p_inicio timestamptz, p_ignorar uuid default null, p_duracao_min int default null)
 returns timestamptz -- devolve o fim
 language plpgsql stable security definer set search_path = public as $$
 declare
   s servicos;
   a ajustes;
+  v_dur int;
   v_fim timestamptz;
   v_local timestamp := p_inicio at time zone 'America/Bahia';
   v_hoje date := (now() at time zone 'America/Bahia')::date;
@@ -178,7 +216,8 @@ begin
   select * into s from servicos where id = p_servico and ativo;
   if not found then raise exception 'Serviço não encontrado.'; end if;
   select * into a from ajustes where id = 1;
-  v_fim := p_inicio + make_interval(mins => s.duracao_min);
+  v_dur := coalesce(p_duracao_min, s.duracao_min);
+  v_fim := p_inicio + make_interval(mins => v_dur);
 
   if p_inicio < now() + make_interval(hours => a.antecedencia_minima_horas) then
     raise exception 'Esse horário está muito próximo. Escolha outro, por favor.';
@@ -190,8 +229,8 @@ begin
     select 1 from disponibilidade d
     where d.dia_semana = extract(dow from v_local)::int
       and v_t >= d.hora_inicio
-      and v_t + make_interval(mins => s.duracao_min) <= d.hora_fim
-      and v_local::date + v_t + make_interval(mins => s.duracao_min) <= v_local::date + d.hora_fim -- não passa da meia-noite
+      and v_t + make_interval(mins => v_dur) <= d.hora_fim
+      and v_local::date + v_t + make_interval(mins => v_dur) <= v_local::date + d.hora_fim -- não passa da meia-noite
       and (extract(epoch from (v_t - d.hora_inicio)) / 60)::int % a.passo_min = 0
   ) then
     raise exception 'Fora do horário de atendimento.';
@@ -324,8 +363,10 @@ begin
   return jsonb_build_object('token', c.token, 'endereco_id', v_end, 'aparelho_id', v_apa);
 end $$;
 
+drop function if exists criar_agendamento(uuid, text, uuid, uuid, timestamptz, text);
 create or replace function criar_agendamento(
-  p_token uuid, p_servico text, p_endereco uuid, p_aparelho uuid, p_inicio timestamptz, p_observacao text default ''
+  p_token uuid, p_servico text, p_endereco uuid, p_aparelho uuid, p_inicio timestamptz, p_observacao text default '',
+  p_quantidade int default 1
 ) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -341,9 +382,11 @@ begin
   end if;
   -- trava de concorrência: um agendamento por vez
   perform pg_advisory_xact_lock(hashtext('vini-agenda'));
-  v_fim := validar_horario(p_servico, p_inicio);
-  insert into agendamentos (cliente_id, servico_id, endereco_id, aparelho_id, inicio, fim, bloqueado_ate, observacao_cliente)
-  values (v_cliente, p_servico, p_endereco, p_aparelho, p_inicio, v_fim, v_fim + deslocamento(), coalesce(p_observacao, ''))
+  if coalesce(p_quantidade, 1) not between 1 and 6 then raise exception 'Quantidade de aparelhos entre 1 e 6.'; end if;
+  v_fim := validar_horario(p_servico, p_inicio, null, duracao_visita(p_servico, p_quantidade, p_aparelho));
+  insert into agendamentos (cliente_id, servico_id, endereco_id, aparelho_id, inicio, fim, bloqueado_ate, observacao_cliente, quantidade)
+  values (v_cliente, p_servico, p_endereco, p_aparelho, p_inicio, v_fim, v_fim + deslocamento(), coalesce(p_observacao, ''),
+    coalesce(p_quantidade, 1))
   returning * into g;
   update retornos set status = 'agendado'
   where cliente_id = v_cliente and servico_id = p_servico and status in ('pendente', 'avisado');
@@ -370,7 +413,7 @@ begin
     and status in ('pendente', 'confirmado', 'remarcado') for update;
   if not found then raise exception 'Este agendamento não pode mais ser alterado.'; end if;
   perform pg_advisory_xact_lock(hashtext('vini-agenda'));
-  v_fim := validar_horario(g.servico_id, p_inicio, g.id);
+  v_fim := validar_horario(g.servico_id, p_inicio, g.id, (extract(epoch from g.fim - g.inicio) / 60)::int);
   update agendamentos set inicio = p_inicio, fim = v_fim, bloqueado_ate = v_fim + deslocamento(), status = 'pendente'
   where id = g.id;
 exception when exclusion_violation then
@@ -424,7 +467,7 @@ begin
   select * into g from agendamentos where id = p_id and status in ('pendente', 'confirmado', 'remarcado') for update;
   if not found then raise exception 'Agendamento não pode ser remarcado.'; end if;
   perform pg_advisory_xact_lock(hashtext('vini-agenda'));
-  v_fim := validar_horario(g.servico_id, p_inicio, g.id);
+  v_fim := validar_horario(g.servico_id, p_inicio, g.id, (extract(epoch from g.fim - g.inicio) / 60)::int);
   update agendamentos set inicio = p_inicio, fim = v_fim, bloqueado_ate = v_fim + deslocamento(), status = 'remarcado'
   where id = g.id;
 exception when exclusion_violation then
@@ -522,7 +565,8 @@ create policy publico_le on ajustes for select to anon, authenticated using (tru
 -- Do técnico: só quem está logado (e elas ainda conferem se é o técnico).
 -- Do cliente: públicas, é assim que o cliente agenda sem senha.
 -- ---------------------------------------------------------------------
-revoke execute on function validar_horario(text, timestamptz, uuid) from public, anon, authenticated;
+revoke execute on function validar_horario(text, timestamptz, uuid, int) from public, anon, authenticated;
+revoke execute on function duracao_visita(text, int, uuid) from public, anon, authenticated;
 revoke execute on function agendamento_json(agendamentos) from public, anon, authenticated;
 revoke execute on function perfil_json(uuid) from public, anon, authenticated;
 revoke execute on function retorno_json(retornos) from public, anon, authenticated;
@@ -547,7 +591,7 @@ begin
   end loop;
   foreach f in array array[
     'horarios_ocupados(timestamptz, timestamptz)', 'entrar_cliente(text)', 'perfil_cliente(uuid)',
-    'salvar_dados_cliente(uuid, jsonb)', 'criar_agendamento(uuid, text, uuid, uuid, timestamptz, text)',
+    'salvar_dados_cliente(uuid, jsonb)', 'criar_agendamento(uuid, text, uuid, uuid, timestamptz, text, int)',
     'cliente_responder_remarcacao(uuid, uuid, boolean)', 'cliente_remarcar(uuid, uuid, timestamptz)',
     'cliente_cancelar(uuid, uuid)']
   loop

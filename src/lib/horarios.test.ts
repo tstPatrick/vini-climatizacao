@@ -119,3 +119,32 @@ describe('tempo', () => {
     expect(isoLocal('2026-11-10', 13 * 60 + 30)).toBe('2026-11-10T13:30:00-03:00')
   })
 })
+
+import { duracaoVisita, textoDuracao } from './horarios'
+
+describe('duracaoVisita', () => {
+  const limpeza = { duracao_min: 60, duracao_adicional_min: 40, extra_grande_min: 20 }
+  it('um aparelho pequeno = duração do serviço', () => {
+    expect(duracaoVisita(limpeza, 1, 12000)).toBe(60)
+    expect(duracaoVisita(limpeza)).toBe(60)
+  })
+  it('cada aparelho a mais soma a duração adicional', () => {
+    expect(duracaoVisita(limpeza, 3, 9000)).toBe(60 + 40 + 40)
+  })
+  it('aparelho grande soma o extra em cada unidade', () => {
+    expect(duracaoVisita(limpeza, 1, 18000)).toBe(80)
+    expect(duracaoVisita(limpeza, 2, 24000)).toBe(80 + 60)
+  })
+  it('limita a quantidade entre 1 e 6', () => {
+    expect(duracaoVisita(limpeza, 0)).toBe(60)
+    expect(duracaoVisita(limpeza, 50)).toBe(60 + 5 * 40)
+  })
+  it('sem duração adicional cadastrada, usa a duração do serviço', () => {
+    expect(duracaoVisita({ duracao_min: 90 }, 2)).toBe(180)
+  })
+  it('formata a duração', () => {
+    expect(textoDuracao(60)).toBe('1h')
+    expect(textoDuracao(90)).toBe('1h30')
+    expect(textoDuracao(45)).toBe('45 min')
+  })
+})

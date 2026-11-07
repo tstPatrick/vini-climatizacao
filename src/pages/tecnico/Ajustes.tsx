@@ -36,7 +36,7 @@ export function ServicosTecnico() {
               <span className="cresce coluna p">
                 <strong>{s.nome}{!s.ativo && ' (oculto)'}</strong>
                 <span className="mutado peq">
-                  {s.duracao_min} min · {s.intervalo_retorno_meses ? `retorno em ${s.intervalo_retorno_meses} meses` : 'sem retorno'} ·{' '}
+                  {s.duracao_min} min (+{s.duracao_adicional_min ?? s.duracao_min} por aparelho a mais) · {s.intervalo_retorno_meses ? `retorno em ${s.intervalo_retorno_meses} meses` : 'sem retorno'} ·{' '}
                   {s.preco_base != null ? moeda(s.preco_base) : 'sob orçamento'}
                 </span>
               </span>
@@ -67,6 +67,8 @@ function EditarServico({ s, fechar, salvar }: { s: Servico; fechar: () => void; 
     nome: s.nome,
     descricao: s.descricao,
     duracao: String(s.duracao_min),
+    adicional: String(s.duracao_adicional_min ?? s.duracao_min),
+    grande: String(s.extra_grande_min ?? 0),
     retorno: s.intervalo_retorno_meses ? String(s.intervalo_retorno_meses) : '',
     preco: s.preco_base != null ? String(s.preco_base).replace('.', ',') : '',
     ativo: s.ativo,
@@ -82,11 +84,15 @@ function EditarServico({ s, fechar, salvar }: { s: Servico; fechar: () => void; 
           rodar(async () => {
             const duracao = Number(f.duracao)
             if (!duracao || duracao < 15 || duracao > 720) throw new Error('Duração entre 15 e 720 minutos.')
+            const adicional = Number(f.adicional || 0)
+            if (isNaN(adicional) || adicional < 0 || adicional > 720) throw new Error('Tempo por aparelho a mais entre 0 e 720 minutos.')
+            const grande = Number(f.grande || 0)
+            if (isNaN(grande) || grande < 0 || grande > 240) throw new Error('Tempo extra para aparelho grande entre 0 e 240 minutos.')
             const retorno = f.retorno ? Number(f.retorno) : null
             if (retorno != null && (retorno < 1 || retorno > 60)) throw new Error('Retorno entre 1 e 60 meses.')
             const preco = f.preco.trim() ? Number(f.preco.replace(/\./g, '').replace(',', '.')) : null
             if (preco != null && isNaN(preco)) throw new Error('Preço inválido.')
-            await salvar({ ...s, nome: f.nome.trim(), descricao: f.descricao.trim(), duracao_min: duracao, intervalo_retorno_meses: retorno, preco_base: preco, ativo: f.ativo })
+            await salvar({ ...s, nome: f.nome.trim(), descricao: f.descricao.trim(), duracao_min: duracao, duracao_adicional_min: adicional, extra_grande_min: grande, intervalo_retorno_meses: retorno, preco_base: preco, ativo: f.ativo })
           })
         }}
       >
@@ -100,7 +106,7 @@ function EditarServico({ s, fechar, salvar }: { s: Servico; fechar: () => void; 
         </div>
         <div className="grade-2">
           <div className="campo">
-            <label htmlFor="sdu">Duração (min)</label>
+            <label htmlFor="sdu">Duração de 1 aparelho (min)</label>
             <input id="sdu" className="entrada" inputMode="numeric" value={f.duracao} onChange={set('duracao')} required />
           </div>
           <div className="campo">
@@ -108,6 +114,20 @@ function EditarServico({ s, fechar, salvar }: { s: Servico; fechar: () => void; 
             <input id="sr" className="entrada" inputMode="numeric" placeholder="Sem retorno" value={f.retorno} onChange={set('retorno')} />
           </div>
         </div>
+        <div className="grade-2">
+          <div className="campo">
+            <label htmlFor="sad">Cada aparelho a mais (min)</label>
+            <input id="sad" className="entrada" inputMode="numeric" value={f.adicional} onChange={set('adicional')} />
+          </div>
+          <div className="campo">
+            <label htmlFor="sgr">Extra p/ 18 mil BTUs ou mais (min)</label>
+            <input id="sgr" className="entrada" inputMode="numeric" value={f.grande} onChange={set('grande')} />
+          </div>
+        </div>
+        <p className="mutado peq">
+          Exemplo: 3 aparelhos = {Number(f.duracao || 0) + 2 * Number(f.adicional || 0)} min
+          {Number(f.grande || 0) > 0 ? ` (ou ${3 * Number(f.grande)} min a mais se forem grandes)` : ''}.
+        </p>
         <div className="campo">
           <label htmlFor="sp">Preço base (R$)</label>
           <input id="sp" className="entrada" inputMode="decimal" placeholder="Vazio = sob orçamento" value={f.preco} onChange={set('preco')} />

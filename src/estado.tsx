@@ -132,6 +132,10 @@ export interface Rascunho {
   endereco_id?: string
   aparelho_id?: string | null
   observacao?: string
+  /** Quantos aparelhos na mesma visita. */
+  quantidade?: number
+  /** Aparelho de 18 mil BTUs ou mais (quando o cliente ainda não cadastrou o aparelho). */
+  grande?: boolean
   /** Quando o cliente está escolhendo outro horário para um agendamento existente. */
   remarcar_id?: string
 }

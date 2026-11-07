@@ -88,3 +88,30 @@ export function horarioValido(e: Omit<EntradaHorarios, 'dia'> & { bloqueios?: Oc
     (h) => h.disponivel && new Date(h.inicio).getTime() === alvo,
   )
 }
+
+/** Aparelhos a partir deste tamanho levam o tempo extra do serviço. */
+export const BTUS_GRANDE = 18000
+
+export const MAX_APARELHOS = 6
+
+/**
+ * Tempo total da visita: o primeiro aparelho leva a duração do serviço e cada um a mais
+ * leva a "duração adicional". Aparelho grande soma o extra em cada unidade.
+ * (Mesma regra no servidor: função duracao_visita em supabase/schema.sql.)
+ */
+export function duracaoVisita(
+  s: { duracao_min: number; duracao_adicional_min?: number | null; extra_grande_min?: number | null },
+  quantidade = 1,
+  btus: number | null = null,
+): number {
+  const q = Math.min(MAX_APARELHOS, Math.max(1, Math.round(quantidade || 1)))
+  const extra = btus != null && btus >= BTUS_GRANDE ? (s.extra_grande_min ?? 0) : 0
+  return s.duracao_min + extra + (q - 1) * ((s.duracao_adicional_min ?? s.duracao_min) + extra)
+}
+
+export function textoDuracao(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (!h) return `${m} min`
+  return m ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`
+}

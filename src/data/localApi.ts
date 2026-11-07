@@ -20,7 +20,7 @@ import type {
   Servico,
 } from './types'
 import { STATUS_ATIVOS } from './types'
-import { horarioValido } from '../lib/horarios'
+import { MAX_APARELHOS, duracaoVisita, horarioValido } from '../lib/horarios'
 import { chaveDia, hojeChave, isoLocal, somarDias, somarMeses } from '../lib/tempo'
 import { normalizarWhats } from '../lib/formato'
 
@@ -92,6 +92,7 @@ function semente(): Banco {
       fim: new Date(new Date(inicio).getTime() + dur(servico) * 60_000).toISOString(),
       status,
       observacao_cliente: '',
+      quantidade: 1,
       criado_em: agoraIso(),
     }
     b.agendamentos.push(a)
@@ -158,23 +159,26 @@ function detalharRetorno(b: Banco, r: Retorno): RetornoDetalhado {
   }
 }
 
-function validarHorario(b: Banco, servico_id: string, inicio: string, ignorarId?: string) {
+function validarHorario(b: Banco, servico_id: string, inicio: string, ignorarId?: string, duracao?: number) {
   const s = b.servicos.find((x) => x.id === servico_id && x.ativo)
   if (!s) throw new ErroApp('Serviço não encontrado.')
+  const dur = duracao ?? s.duracao_min
   const ocupados = b.agendamentos
     .filter((a) => STATUS_ATIVOS.includes(a.status) && a.id !== ignorarId)
     .map((a) => ({ inicio: a.inicio, fim: a.fim }))
   const ok = horarioValido({
     inicio,
-    duracaoMin: s.duracao_min,
+    duracaoMin: dur,
     disponibilidade: b.disponibilidade,
     ocupados,
     bloqueios: b.bloqueios,
     ajustes: b.ajustes,
   })
   if (!ok) throw new ErroApp('Esse horário acabou de ser ocupado. Escolha outro, por favor.')
-  return { inicio: new Date(inicio).toISOString(), fim: new Date(new Date(inicio).getTime() + s.duracao_min * 60_000).toISOString() }
+  return { inicio: new Date(inicio).toISOString(), fim: new Date(new Date(inicio).getTime() + dur * 60_000).toISOString() }
 }
+
+const minutosDe = (a: Agendamento) => Math.round((new Date(a.fim).getTime() - new Date(a.inicio).getTime()) / 60_000)
 
 function clienteDoToken(b: Banco, token: string) {
   const c = b.clientes.find((x) => x.token === token)
@@ -278,7 +282,11 @@ export function criarLocalApi(): Api {
       const b = ler()
       const c = clienteDoToken(b, token)
       if (!b.enderecos.some((e) => e.id === novo.endereco_id && e.cliente_id === c.id)) throw new ErroApp('Informe o endereço.')
-      const h = validarHorario(b, novo.servico_id, novo.inicio)
+      const qtd = novo.quantidade ?? 1
+      if (qtd < 1 || qtd > MAX_APARELHOS) throw new ErroApp('Quantidade de aparelhos entre 1 e 6.')
+      const s = b.servicos.find((x) => x.id === novo.servico_id)
+      const btus = b.aparelhos.find((x) => x.id === novo.aparelho_id)?.btus ?? null
+      const h = validarHorario(b, novo.servico_id, novo.inicio, undefined, s ? duracaoVisita(s, qtd, btus) : undefined)
       const a: Agendamento = {
         id: id(),
         cliente_id: c.id,
@@ -288,6 +296,7 @@ export function criarLocalApi(): Api {
         ...h,
         status: 'pendente',
         observacao_cliente: novo.observacao_cliente,
+        quantidade: qtd,
         criado_em: agoraIso(),
       }
       b.agendamentos.push(a)
@@ -311,7 +320,7 @@ export function criarLocalApi(): Api {
       const b = ler()
       const a = agendamentoDoCliente(b, token, agId)
       if (!STATUS_ATIVOS.includes(a.status)) throw new ErroApp('Este agendamento não pode mais ser alterado.')
-      Object.assign(a, validarHorario(b, a.servico_id, inicio, a.id), { status: 'pendente' })
+      Object.assign(a, validarHorario(b, a.servico_id, inicio, a.id, minutosDe(a)), { status: 'pendente' })
       gravar(b)
     },
 
@@ -378,7 +387,7 @@ export function criarLocalApi(): Api {
       const b = ler()
       const a = b.agendamentos.find((x) => x.id === agId)
       if (!a || !STATUS_ATIVOS.includes(a.status)) throw new ErroApp('Agendamento não pode ser remarcado.')
-      Object.assign(a, validarHorario(b, a.servico_id, inicio, a.id), { status: 'remarcado' })
+      Object.assign(a, validarHorario(b, a.servico_id, inicio, a.id, minutosDe(a)), { status: 'remarcado' })
       gravar(b)
     },
 

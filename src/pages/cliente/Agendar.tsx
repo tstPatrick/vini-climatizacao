@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
+import { BTUS_GRANDE, MAX_APARELHOS, duracaoVisita, textoDuracao } from '../../lib/horarios'
 import { AtivarAvisos } from '../../components/Avisos'
 import { CampoFoto, Cabecalho, Carregando, Erro, useAcao } from '../../components/ui'
 import { useEstado, useRascunho } from '../../estado'
@@ -59,6 +60,12 @@ export function EscolherHorario() {
 
   if (!servico) return <Navigate to="/agendar" replace />
 
+  const quantidade = r.quantidade ?? 1
+  const btus = aparelho ? aparelho.btus : r.grande ? BTUS_GRANDE : null
+  const duracao = remarcando
+    ? Math.round((new Date(remarcando.fim).getTime() - new Date(remarcando.inicio).getTime()) / 60_000)
+    : duracaoVisita(servico, quantidade, btus)
+
   async function confirmar() {
     if (!r.inicio) return
     if (!token || !endereco) return nav('/agendar/dados?confirmar=1')
@@ -69,6 +76,7 @@ export function EscolherHorario() {
         aparelho_id: aparelho?.id ?? null,
         inicio: r.inicio!,
         observacao_cliente: r.observacao ?? '',
+        quantidade,
       })
       await recarregarPerfil()
       limpar()
@@ -94,12 +102,43 @@ export function EscolherHorario() {
         {!remarcando && <span className="passo">Passo 2 de 3</span>}
         <h1 className="titulo">{remarcando ? 'Escolha outro horário' : 'Dia e horário'}</h1>
         <p className="mutado">
-          {servico.nome} · cerca de {servico.duracao_min >= 60 ? `${servico.duracao_min / 60}h`.replace('.', ',') : `${servico.duracao_min} min`}
+          {servico.nome}
+          {(remarcando?.quantidade ?? quantidade) > 1 ? ` · ${remarcando?.quantidade ?? quantidade} aparelhos` : ''} · cerca de {textoDuracao(duracao)}
         </p>
       </div>
 
+      {!remarcando && (
+        <section className="cartao coluna" aria-label="Aparelhos">
+          <div className="linha entre">
+            <span className="forte">Quantos aparelhos?</span>
+            <div className="linha" style={{ gap: 8 }}>
+              <button className="btn-icone" aria-label="Menos um aparelho" disabled={quantidade <= 1} style={{ opacity: quantidade <= 1 ? 0.4 : 1 }} onClick={() => atualizar({ quantidade: quantidade - 1, inicio: undefined })}>
+                <Icone nome="menos" />
+              </button>
+              <strong style={{ minWidth: 28, textAlign: 'center', fontSize: 20 }} aria-live="polite">{quantidade}</strong>
+              <button className="btn-icone" aria-label="Mais um aparelho" disabled={quantidade >= MAX_APARELHOS} style={{ opacity: quantidade >= MAX_APARELHOS ? 0.4 : 1 }} onClick={() => atualizar({ quantidade: quantidade + 1, inicio: undefined })}>
+                <Icone nome="mais" />
+              </button>
+            </div>
+          </div>
+          {!aparelho && (
+            <div className="coluna p">
+              <span className="rotulo">Tamanho do aparelho</span>
+              <div className="grade-2" role="radiogroup" aria-label="Tamanho do aparelho">
+                <button className={`opcao ${!r.grande ? 'ativa' : ''}`} role="radio" aria-checked={!r.grande} style={{ minHeight: 52, justifyContent: 'center' }} onClick={() => atualizar({ grande: false, inicio: undefined })}>
+                  Até 12 mil BTUs
+                </button>
+                <button className={`opcao ${r.grande ? 'ativa' : ''}`} role="radio" aria-checked={!!r.grande} style={{ minHeight: 52, justifyContent: 'center' }} onClick={() => atualizar({ grande: true, inicio: undefined })}>
+                  18 mil ou mais
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       <SeletorHorario
-        duracaoMin={servico.duracao_min}
+        duracaoMin={duracao}
         valor={r.inicio}
         mudar={(inicio) => atualizar({ inicio })}
         ignorar={remarcando ? { inicio: remarcando.inicio, fim: remarcando.fim } : undefined}
@@ -161,7 +200,9 @@ export function DadosCliente() {
     endAtual ?? { rua: '', numero: '', bairro: '', complemento: '', observacoes: '' },
   )
   const [apaId, setApaId] = useState<string>(apaAtual?.id ?? 'novo')
-  const [apa, setApa] = useState<Omit<Aparelho, 'id' | 'cliente_id'>>(apaAtual ?? { tipo: 'Split', marca: '', btus: 12000, foto_url: null })
+  const [apa, setApa] = useState<Omit<Aparelho, 'id' | 'cliente_id'>>(
+    apaAtual ?? { tipo: 'Split', marca: '', btus: r.grande ? 18000 : 12000, foto_url: null },
+  )
   const [obs, setObs] = useState(r.observacao ?? '')
 
   useEffect(() => {
@@ -199,6 +240,7 @@ export function DadosCliente() {
           aparelho_id: res.aparelho_id,
           inicio: r.inicio,
           observacao_cliente: obs,
+          quantidade: r.quantidade ?? 1,
         })
         limpar()
         nav(`/agendar/feito/${a.id}`, { replace: true })
@@ -367,7 +409,7 @@ export function ResumoAgendamento({ a }: { a: AgendamentoDetalhado }) {
       </div>
       <div className="info">
         <Icone nome="aparelho" />
-        <div className="coluna p"><span className="rotulo">Aparelho</span><strong>{aparelhoTexto(a.aparelho)}</strong></div>
+        <div className="coluna p"><span className="rotulo">{(a.quantidade ?? 1) > 1 ? `${a.quantidade} aparelhos` : 'Aparelho'}</span><strong>{aparelhoTexto(a.aparelho)}</strong></div>
       </div>
     </section>
   )

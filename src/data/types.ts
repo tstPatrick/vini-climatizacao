@@ -6,6 +6,10 @@ export interface Servico {
   nome: string
   descricao: string
   duracao_min: number
+  /** Tempo de cada aparelho a mais na mesma visita. */
+  duracao_adicional_min: number
+  /** Tempo extra por aparelho grande (18 mil BTUs ou mais). */
+  extra_grande_min: number
   intervalo_retorno_meses: number | null
   preco_base: number | null
   ordem: number
@@ -48,6 +52,7 @@ export interface Agendamento {
   fim: string
   status: StatusAgendamento
   observacao_cliente: string
+  quantidade: number
   criado_em: string
 }
 
@@ -142,6 +147,7 @@ export interface NovoAgendamento {
   aparelho_id: string | null
   inicio: string
   observacao_cliente: string
+  quantidade: number
 }
 
 export interface DadosConclusao {

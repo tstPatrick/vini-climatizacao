@@ -17,7 +17,8 @@ function quando(iso: string) {
 }
 
 function mensagem(evento: string, a: any) {
-  const s = a.servicos?.nome ?? 'Serviço'
+  const qtd = a.quantidade ?? 1
+  const s = (a.servicos?.nome ?? 'Serviço') + (qtd > 1 ? ` (${qtd} aparelhos)` : '')
   const nome = a.clientes?.nome ?? 'Cliente'
   const bairro = a.enderecos?.bairro ? ` · ${a.enderecos.bairro}` : ''
   const q = quando(a.inicio)
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
   const { agendamento_id, evento } = await req.json().catch(() => ({}))
   const { data: a } = await sb
     .from('agendamentos')
-    .select('id, inicio, cliente_id, servicos(nome), clientes(nome), enderecos(bairro)')
+    .select('id, inicio, quantidade, cliente_id, servicos(nome), clientes(nome), enderecos(bairro)')
     .eq('id', agendamento_id)
     .single()
   const msg = a && mensagem(evento, a)
