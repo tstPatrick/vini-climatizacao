@@ -10,13 +10,14 @@ export function criarSupabaseApi(url: string, chave: string): Api {
   const sb: SupabaseClient = createClient(url, chave, { auth: { persistSession: true, autoRefreshToken: true } })
 
   async function rpc<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
-    const { data, error } = await sb.rpc(fn, args)
-    if (error) throw new ErroApp(traduzir(error.message))
+    // Funções só de leitura vão por GET (mais compatível com navegadores e bloqueadores).
+    const { data, error } = await sb.rpc(fn, args, { get: LEITURA.has(fn) })
+    if (error) throw new ErroApp(traduzir(error.message, fn))
     return data as T
   }
   async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null }>): Promise<T> {
     const { data, error } = await p
-    if (error) throw new ErroApp(traduzir(error.message))
+    if (error) throw new ErroApp(traduzir(error.message, 'tabela'))
     return data
   }
 
@@ -127,8 +128,19 @@ export function criarSupabaseApi(url: string, chave: string): Api {
   }
 }
 
-function traduzir(msg: string): string {
-  if (/failed to fetch|network/i.test(msg)) return 'Sem conexão com a internet. Tente de novo.'
+const LEITURA = new Set([
+  'horarios_ocupados', 'entrar_cliente', 'perfil_cliente', 'eh_tecnico',
+  'tec_agendamentos', 'tec_agendamento', 'tec_clientes', 'tec_cliente', 'tec_retornos',
+])
+
+function traduzir(msg: string, origem: string): string {
   if (/sem_conflito|exclusion/i.test(msg)) return 'Esse horário acabou de ser ocupado. Escolha outro, por favor.'
+  if (/fetch|load failed|network/i.test(msg)) {
+    if (!navigator.onLine) return 'Sem conexão com a internet. Tente de novo.'
+    return `Não foi possível falar com o servidor. Tente de novo. (${origem}: ${msg})`
+  }
+  if (/could not find the function|schema cache|does not exist/i.test(msg))
+    return `O banco não está completo: rode o arquivo supabase/schema.sql de novo no Supabase. (${origem}: ${msg})`
+  if (/permission denied/i.test(msg)) return `Sem permissão no banco. (${origem}: ${msg})`
   return msg
 }

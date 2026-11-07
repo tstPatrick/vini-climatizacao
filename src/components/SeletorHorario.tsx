@@ -123,8 +123,15 @@ export function SeletorHorario({ duracaoMin, valor, mudar, ignorar }: Props) {
         })}
       </div>
 
-      <Erro>{erro}</Erro>
-      {!ocupados && !erro ? (
+      {erro && (
+        <div className="coluna p">
+          <Erro>{erro}</Erro>
+          <button className="btn btn-secundario btn-p" onClick={() => setVersao((v) => v + 1)}>
+            Tentar de novo
+          </button>
+        </div>
+      )}
+      {erro ? null : !ocupados ? (
         <Carregando />
       ) : horarios.length === 0 ? (
         <p className="mutado centro">Sem atendimento neste dia. Escolha outro.</p>
