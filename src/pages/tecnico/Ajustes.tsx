@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Icone, iconeServico } from '../../components/Icone'
 import { BotaoInstalar } from '../../components/Instalar'
 import { AtivarAvisos } from '../../components/Avisos'
+import { MinhaConta } from './MinhaConta'
 import { Cabecalho, Carregando, Erro, Modal, RodapeVersao, useAcao } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { Ajustes, Bloqueio, Disponibilidade, Servico } from '../../data/types'
@@ -177,6 +178,8 @@ export function AjustesTecnico() {
       <Cabecalho titulo="Ajustes" />
       <div className="grade-desk coluna">
         <div className="coluna">
+          <MinhaConta />
+
           <section className="cartao coluna" aria-label="Contato e regras">
             <h2 className="subtitulo">Contato e regras</h2>
             <div className="campo">

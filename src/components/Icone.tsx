@@ -22,6 +22,8 @@ const caminhos: Record<string, JSX.Element> = {
   telefone: <path d="M5 4h3.5l1.5 4.5-2 1.5a11 11 0 0 0 6 6l1.5-2 4.5 1.5V19a1.5 1.5 0 0 1-1.6 1.5C10.5 20 4 13.5 3.5 5.6A1.5 1.5 0 0 1 5 4Z" />,
   mais: <path d="M12 5v14M5 12h14" />,
   menos: <path d="M5 12h14" />,
+  chave: <><circle cx="8" cy="15" r="4" /><path d="m11 12 9-9M17 6l3 3M15 8l2 2" /></>,
+  email: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></>,
   busca: <><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></>,
   clientes: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 19.5c1-3.3 3.5-5 6.5-5s5.5 1.7 6.5 5" /><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.6c1.7.7 2.9 2.3 3.5 4.9" /></>,
   ajustes: <><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M2.5 12h3M18.5 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1" /></>,

@@ -44,6 +44,10 @@ export interface Api {
   login(email: string, senha: string): Promise<void>
   logout(): Promise<void>
   logado(): Promise<boolean>
+  /** E-mail de acesso do técnico logado. */
+  tecEmail(): Promise<string | null>
+  tecTrocarSenha(atual: string, nova: string): Promise<void>
+  tecTrocarEmail(novo: string, senha: string): Promise<void>
   tecAgendamentos(de: string, ate: string): Promise<AgendamentoDetalhado[]>
   tecAgendamento(id: string): Promise<AgendamentoDetalhado | null>
   tecConfirmar(id: string): Promise<void>

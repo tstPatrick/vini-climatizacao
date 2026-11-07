@@ -692,3 +692,25 @@ revoke execute on function salvar_push_cliente(uuid, jsonb) from public;
 grant execute on function salvar_push_cliente(uuid, jsonb) to anon, authenticated;
 revoke execute on function tec_salvar_push(jsonb) from public, anon;
 grant execute on function tec_salvar_push(jsonb) to authenticated;
+
+-- =====================================================================
+-- Minha conta (técnico): trocar o e-mail de acesso sem e-mail de confirmação.
+-- O app confere a senha atual antes de chamar esta função.
+-- =====================================================================
+create or replace function tec_trocar_email(p_email text) returns void
+language plpgsql security definer set search_path = public, auth as $$
+declare v_email text := lower(trim(p_email));
+begin
+  perform exigir_tecnico();
+  if v_email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' then raise exception 'Informe um e-mail válido.'; end if;
+  if exists (select 1 from auth.users where lower(email) = v_email and id <> auth.uid()) then
+    raise exception 'Esse e-mail já está em uso.';
+  end if;
+  update auth.users set email = v_email, email_confirmed_at = coalesce(email_confirmed_at, now()), updated_at = now()
+  where id = auth.uid();
+  update auth.identities set identity_data = jsonb_set(identity_data, '{email}', to_jsonb(v_email)), updated_at = now()
+  where user_id = auth.uid() and provider = 'email';
+end $$;
+
+revoke execute on function tec_trocar_email(text) from public, anon;
+grant execute on function tec_trocar_email(text) to authenticated;

@@ -89,6 +89,27 @@ export function criarSupabaseApi(url: string, chave: string): Api {
       const { data } = await sb.auth.getSession()
       return !!data.session
     },
+    async tecEmail() {
+      const { data } = await sb.auth.getSession()
+      return data.session?.user.email ?? null
+    },
+    async tecTrocarSenha(atual, nova) {
+      const email = (await sb.auth.getSession()).data.session?.user.email
+      if (!email) throw new ErroApp('Entre como técnico para continuar.')
+      const conferir = await sb.auth.signInWithPassword({ email, password: atual })
+      if (conferir.error) throw new ErroApp('Senha atual incorreta.')
+      const { error } = await sb.auth.updateUser({ password: nova })
+      if (error) throw new ErroApp(/weak|short|characters/i.test(error.message) ? 'Senha fraca: use pelo menos 10 caracteres, com letras e números.' : /same|different/i.test(error.message) ? 'A nova senha deve ser diferente da atual.' : error.message)
+    },
+    async tecTrocarEmail(novo, senha) {
+      const email = (await sb.auth.getSession()).data.session?.user.email
+      if (!email) throw new ErroApp('Entre como técnico para continuar.')
+      const conferir = await sb.auth.signInWithPassword({ email, password: senha })
+      if (conferir.error) throw new ErroApp('Senha incorreta.')
+      await rpc('tec_trocar_email', { p_email: novo })
+      // Entra de novo para a sessão já mostrar o e-mail novo.
+      await sb.auth.signInWithPassword({ email: novo.trim().toLowerCase(), password: senha })
+    },
 
     tecAgendamentos: async (de, ate) => (await rpc<AgendamentoDetalhado[]>('tec_agendamentos', { p_de: de, p_ate: ate })).map(detalhado),
     tecAgendamento: async (id) => {

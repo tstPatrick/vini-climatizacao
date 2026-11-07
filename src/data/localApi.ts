@@ -42,6 +42,17 @@ const CHAVE = 'vini-demo-banco'
 const CHAVE_SESSAO = 'vini-demo-tecnico'
 export const DEMO_EMAIL = 'tecnico@vini.app'
 export const DEMO_SENHA = 'vini123'
+const CHAVE_CREDENCIAIS = 'vini-demo-credenciais'
+
+function credenciaisDemo(): { email: string; senha: string } {
+  try {
+    const c = JSON.parse(localStorage.getItem(CHAVE_CREDENCIAIS) || 'null')
+    if (c?.email && c?.senha) return c
+  } catch {
+    /* ignora */
+  }
+  return { email: DEMO_EMAIL, senha: DEMO_SENHA }
+}
 
 const id = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36))
 const agoraIso = () => new Date().toISOString()
@@ -338,7 +349,8 @@ export function criarLocalApi(): Api {
 
     async login(email, senha) {
       await espera()
-      if (email.trim().toLowerCase() !== DEMO_EMAIL || senha !== DEMO_SENHA) throw new ErroApp('E-mail ou senha incorretos.')
+      const c = credenciaisDemo()
+      if (email.trim().toLowerCase() !== c.email || senha !== c.senha) throw new ErroApp('E-mail ou senha incorretos.')
       localStorage.setItem(CHAVE_SESSAO, '1')
     },
     async logout() {
@@ -346,6 +358,24 @@ export function criarLocalApi(): Api {
     },
     async logado() {
       return localStorage.getItem(CHAVE_SESSAO) === '1'
+    },
+    async tecEmail() {
+      return localStorage.getItem(CHAVE_SESSAO) === '1' ? credenciaisDemo().email : null
+    },
+    async tecTrocarSenha(atual, nova) {
+      exigirTecnico()
+      await espera()
+      const c = credenciaisDemo()
+      if (atual !== c.senha) throw new ErroApp('Senha atual incorreta.')
+      if (nova === c.senha) throw new ErroApp('A nova senha deve ser diferente da atual.')
+      localStorage.setItem(CHAVE_CREDENCIAIS, JSON.stringify({ ...c, senha: nova }))
+    },
+    async tecTrocarEmail(novo, senha) {
+      exigirTecnico()
+      await espera()
+      const c = credenciaisDemo()
+      if (senha !== c.senha) throw new ErroApp('Senha incorreta.')
+      localStorage.setItem(CHAVE_CREDENCIAIS, JSON.stringify({ ...c, email: novo.trim().toLowerCase() }))
     },
 
     async tecAgendamentos(de, ate) {
@@ -517,6 +547,7 @@ export function criarLocalApi(): Api {
     },
 
     async reiniciarDemo() {
+      localStorage.removeItem(CHAVE_CREDENCIAIS)
       gravar(semente())
     },
   }
