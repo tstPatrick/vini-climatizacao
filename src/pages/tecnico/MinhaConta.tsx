@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Icone } from '../../components/Icone'
-import { Erro, Modal, useAcao } from '../../components/ui'
+import { Erro, Modal, useAcao, EntradaSenha } from '../../components/ui'
 import { useEstado } from '../../estado'
 
 const senhaForte = (s: string) => s.length >= 10 && /[a-zA-Z]/.test(s) && /\d/.test(s)
@@ -68,16 +68,16 @@ function ModalSenha({ fechar }: { fechar: () => void }) {
       >
         <div className="campo">
           <label htmlFor="sa">Senha atual</label>
-          <input id="sa" type="password" className="entrada" autoComplete="current-password" value={atual} onChange={(e) => setAtual(e.target.value)} required />
+          <EntradaSenha id="sa" autoComplete="current-password" value={atual} onChange={(e) => setAtual(e.target.value)} required />
         </div>
         <div className="campo">
           <label htmlFor="sn">Nova senha</label>
-          <input id="sn" type="password" className="entrada" autoComplete="new-password" value={nova} onChange={(e) => setNova(e.target.value)} required />
+          <EntradaSenha id="sn" autoComplete="new-password" value={nova} onChange={(e) => setNova(e.target.value)} required />
           <span className="mutado peq">Mínimo de 10 caracteres, com letras e números.</span>
         </div>
         <div className="campo">
           <label htmlFor="sr">Repita a nova senha</label>
-          <input id="sr" type="password" className="entrada" autoComplete="new-password" value={repetir} onChange={(e) => setRepetir(e.target.value)} required />
+          <EntradaSenha id="sr" autoComplete="new-password" value={repetir} onChange={(e) => setRepetir(e.target.value)} required />
         </div>
         <Erro>{erro}</Erro>
         <button className="btn btn-primario" disabled={ocupado}>
@@ -122,7 +122,7 @@ function ModalEmail({ atual, fechar, pronto }: { atual: string; fechar: () => vo
         </div>
         <div className="campo">
           <label htmlFor="es">Sua senha (para confirmar)</label>
-          <input id="es" type="password" className="entrada" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <EntradaSenha id="es" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
         </div>
         <p className="mutado peq">Depois de salvar, use o novo e-mail para entrar no painel.</p>
         <Erro>{erro}</Erro>

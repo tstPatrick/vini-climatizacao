@@ -3,7 +3,7 @@ import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-d
 import { Icone } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
 import { useSincronizarPush } from '../../components/Avisos'
-import { BarraNav, Carregando, Erro, Modal, useAcao, RodapeVersao } from '../../components/ui'
+import { BarraNav, Carregando, Erro, Modal, useAcao, RodapeVersao, EntradaSenha } from '../../components/ui'
 import { useEstado } from '../../estado'
 import type { AgendamentoDetalhado } from '../../data/types'
 import { DEMO_EMAIL, DEMO_SENHA } from '../../data/localApi'
@@ -114,7 +114,7 @@ export function LoginTecnico() {
         </div>
         <div className="campo">
           <label htmlFor="senha">Senha</label>
-          <input id="senha" type="password" className="entrada" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
+          <EntradaSenha id="senha" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} required />
         </div>
         {api.modo === 'demo' && (
           <p className="aviso-msg peq">

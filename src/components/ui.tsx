@@ -156,6 +156,26 @@ export function Campo({
   )
 }
 
+/** Campo de senha com botão de olho para mostrar/esconder o que foi digitado. */
+export function EntradaSenha(p: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { id: string }) {
+  const [ver, setVer] = useState(false)
+  return (
+    <div className="campo-senha">
+      <input {...p} type={ver ? 'text' : 'password'} className="entrada" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+      <button
+        type="button"
+        className={`btn-olho ${ver ? 'ativo' : ''}`}
+        aria-label={ver ? 'Esconder senha' : 'Mostrar senha'}
+        aria-pressed={ver}
+        aria-controls={p.id}
+        onClick={() => setVer((v) => !v)}
+      >
+        <Icone nome={ver ? 'olhoFechado' : 'olho'} tamanho={22} />
+      </button>
+    </div>
+  )
+}
+
 /** Executa uma ação assíncrona mostrando erro e estado "ocupado". */
 export function useAcao() {
   const [ocupado, setOcupado] = useState(false)

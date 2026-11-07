@@ -208,6 +208,14 @@ textarea.entrada { padding: 14px 16px; min-height: 96px; resize: vertical; }
 .busca { position: relative; }
 .busca svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--texto-2); }
 .busca .entrada { padding-left: 46px; }
+.campo-senha { position: relative; }
+.campo-senha .entrada { padding-right: 56px; }
+.btn-olho {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px; border: 0; background: transparent; color: var(--texto-2);
+  display: grid; place-items: center; border-radius: 12px;
+}
+.btn-olho.ativo { color: var(--acao); }
 .foto-campo {
   border: 1.5px dashed var(--borda); border-radius: 20px; background: #fff; min-height: 96px;
   display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--acao); font-weight: 700; position: relative; overflow: hidden;
