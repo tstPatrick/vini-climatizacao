@@ -22,9 +22,9 @@ Login do técnico na demonstração: `tecnico@vini.app` / `vini123` (rota `#/tec
 2. No **SQL Editor**, cole e rode `supabase/schema.sql` (pode rodar de novo sem problemas).
 3. Em **Authentication → Users**, crie o usuário do técnico (e-mail e senha). Desative cadastros públicos
    em **Authentication → Providers → Email → Allow new users to sign up**.
-4. No SQL Editor, autorize esse usuário como técnico:
+4. No SQL Editor, autorize esse usuário como técnico (copie e cole sem mudar nada — vale para o único usuário criado):
    ```sql
-   insert into tecnicos (user_id) select id from auth.users where email = 'SEU-EMAIL';
+   insert into tecnicos (user_id) select id from auth.users on conflict do nothing;
    ```
 5. Copie `Project URL` e `anon public key` (Settings → API) para um arquivo `.env`
    (veja `.env.example`) — ou, no GitHub, em **Settings → Secrets and variables → Actions → Variables**
