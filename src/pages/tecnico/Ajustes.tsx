@@ -304,6 +304,9 @@ export function AjustesTecnico() {
             )}
             {permissao === 'granted' && <p className="mutado peq">Avisos de novos pedidos ativados (com o app aberto).</p>}
             <BotaoInstalar />
+            <button className="btn btn-secundario" onClick={() => nav('/inicio')}>
+              <Icone nome="inicio" /> Ver app do cliente
+            </button>
             {api.modo === 'demo' && api.reiniciarDemo && (
               <button className="btn btn-secundario" onClick={() => setReiniciar(true)}>
                 <Icone nome="historico" /> Reiniciar dados de demonstração

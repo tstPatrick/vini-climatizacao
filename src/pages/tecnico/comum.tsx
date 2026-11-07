@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Icone } from '../../components/Icone'
 import { SeletorHorario } from '../../components/SeletorHorario'
 import { BarraNav, Carregando, Erro, Modal, useAcao } from '../../components/ui'
@@ -87,7 +87,12 @@ export function LoginTecnico() {
   const { ocupado, erro, rodar } = useAcao()
   const destino = (local.state as { de?: string } | null)?.de ?? '/tecnico'
   return (
-    <main className="tela sem-nav" style={{ justifyContent: 'center' }}>
+    <main className="tela sem-nav">
+      <header className="cabecalho">
+        <Link className="btn-icone" to="/inicio" aria-label="Voltar ao início">
+          <Icone nome="esquerda" />
+        </Link>
+      </header>
       <img src={`${import.meta.env.BASE_URL}vini-logo.png`} alt="Vini Climatização" style={{ width: 220, margin: '0 auto' }} />
       <h1 className="titulo centro">Área do técnico</h1>
       <form
@@ -117,6 +122,9 @@ export function LoginTecnico() {
         <button className="btn btn-primario" disabled={ocupado}>
           {ocupado ? 'Entrando…' : 'Entrar'}
         </button>
+        <Link className="btn-link" to="/inicio">
+          Voltar ao início
+        </Link>
       </form>
     </main>
   )
