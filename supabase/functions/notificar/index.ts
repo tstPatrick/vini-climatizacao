@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   q = PARA_TECNICO.has(evento) ? q.eq('tecnico', true) : q.eq('cliente_id', a.cliente_id)
   const { data: inscricoes } = await q
 
-  webpush.setVapidDetails(cfg.contato || 'https://vini-climatizacao.tstpatrickernandes.workers.dev', cfg.vapid_publica, cfg.vapid_privada)
+  webpush.setVapidDetails(cfg.contato || 'https://vini-climatizacao.eservicos.workers.dev', cfg.vapid_publica, cfg.vapid_privada)
   const payload = JSON.stringify({ ...msg, tag: `ag-${a.id}` })
   let enviados = 0
   const erros: string[] = []
