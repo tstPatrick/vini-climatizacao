@@ -37,4 +37,15 @@ for t in (192, 512):
 icone(180, 0.78, GELO, False).convert("RGB").save("public/apple-touch-icon.png")
 icone(64, 0.86, GELO, True).save("public/favicon.png")
 mark.save("public/vini-mark.png")
+
+# Ícone pequeno da barra de notificações do Android: uma cor só (branco), fundo transparente.
+alfa = mark.split()[3].point(lambda v: 255 if v > 110 else 0)
+branco = Image.new("RGBA", mark.size, (255, 255, 255, 0))
+branco.putalpha(alfa)
+branco = branco.crop(branco.getbbox())
+badge = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
+r = min(84 / branco.width, 84 / branco.height)
+b2 = branco.resize((int(branco.width * r), int(branco.height * r)), Image.LANCZOS)
+badge.alpha_composite(b2, ((96 - b2.width) // 2, (96 - b2.height) // 2))
+badge.save("public/badge-96.png")
 print("ícones gerados")

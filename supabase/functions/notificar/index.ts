@@ -16,11 +16,17 @@ function quando(iso: string) {
   return `${dia} às ${hora}`
 }
 
+const hora = (iso: string) =>
+  new Date(iso).toLocaleTimeString('pt-BR', { timeZone: 'America/Bahia', hour: '2-digit', minute: '2-digit' })
+const dataCurta = (iso: string) =>
+  new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'America/Bahia', weekday: 'long', day: '2-digit', month: '2-digit' })
+
 function mensagem(evento: string, a: any) {
   const qtd = a.quantidade ?? 1
   const s = (a.servicos?.nome ?? 'Serviço') + (qtd > 1 ? ` (${qtd} aparelhos)` : '')
   const nome = a.clientes?.nome ?? 'Cliente'
   const bairro = a.enderecos?.bairro ? ` · ${a.enderecos.bairro}` : ''
+  const rua = a.enderecos?.rua ? ` · ${a.enderecos.rua}${a.enderecos.numero ? ', ' + a.enderecos.numero : ''}` : ''
   const q = quando(a.inicio)
   const tec = `./#/tecnico/agendamento/${a.id}`
   const cli = `./#/meus/${a.id}`
@@ -39,6 +45,10 @@ function mensagem(evento: string, a: any) {
       return { titulo: 'Novo horário sugerido', corpo: `${s} · ${q}. Toque para aceitar ou escolher outro.`, url: cli }
     case 'cancelado':
       return { titulo: 'Agendamento cancelado', corpo: `${s} · ${q}. Toque para escolher outro horário.`, url: cli }
+    case 'lembrete_vespera':
+      return { titulo: 'Lembrete: seu atendimento é amanhã', corpo: `${s} · ${dataCurta(a.inicio)} às ${hora(a.inicio)}${bairro}. Até lá!`, url: cli }
+    case 'lembrete_1h':
+      return { titulo: 'Seu atendimento é daqui a 1 hora', corpo: `${s} às ${hora(a.inicio)}${rua}.`, url: cli }
     default:
       return null
   }
@@ -52,7 +62,7 @@ Deno.serve(async (req) => {
   const { agendamento_id, evento } = await req.json().catch(() => ({}))
   const { data: a } = await sb
     .from('agendamentos')
-    .select('id, inicio, quantidade, cliente_id, servicos(nome), clientes(nome), enderecos(bairro)')
+    .select('id, inicio, quantidade, cliente_id, servicos(nome), clientes(nome), enderecos(bairro, rua, numero)')
     .eq('id', agendamento_id)
     .single()
   const msg = a && mensagem(evento, a)

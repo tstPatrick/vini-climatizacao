@@ -10,7 +10,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(d.titulo || 'Vini Climatização', {
       body: d.corpo || '',
       icon: 'icon-192.png',
-      badge: 'icon-192.png',
+      badge: 'badge-96.png',
       tag: d.tag,
       data: { url: d.url || './' },
     }),
