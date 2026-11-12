@@ -6,6 +6,7 @@ import { MODO_DEMO } from './data/api'
 import { Abertura, Entrar, Inicio } from './pages/cliente/Inicio'
 import { Confirmacao, DadosCliente, EscolherHorario, EscolherServico } from './pages/cliente/Agendar'
 import { DetalheCliente, Historico, MinhaAgenda, Perfil } from './pages/cliente/Conta'
+import { OrcamentoEnviado, PedirOrcamento } from './pages/cliente/Orcamento'
 import { LayoutTecnico, LoginTecnico } from './pages/tecnico/comum'
 import { AgendaTecnico } from './pages/tecnico/Agenda'
 import { ConcluirServico, DetalheAgendamentoTec } from './pages/tecnico/Agendamento'
@@ -51,6 +52,8 @@ export function App() {
           <Route path="/agendar/dados" element={<DadosCliente />} />
           <Route path="/agendar/feito/:id" element={<Confirmacao />} />
           <Route path="/meus/:id" element={<DetalheCliente />} />
+          <Route path="/orcamento" element={<PedirOrcamento />} />
+          <Route path="/orcamento/enviado" element={<OrcamentoEnviado />} />
 
           <Route path="/tecnico/login" element={<LoginTecnico />} />
           <Route path="/tecnico" element={<LayoutTecnico />}>

@@ -8,6 +8,7 @@ import { chaveDia, dataLonga, DIAS_LONGOS, diaSemana, hojeChave, horaDe, inicioS
 import { linkWhats, mensagens } from '../../lib/whatsapp'
 import { useAcoesAgendamento } from './comum'
 import { AtivarAvisos } from '../../components/Avisos'
+import { PedidosOrcamento } from './Pedidos'
 
 const inicioDoDia = (d: string) => new Date(`${d}T00:00:00-03:00`).toISOString()
 
@@ -85,6 +86,8 @@ export function AgendaTecnico() {
       )}
 
       <AtivarAvisos tipo="tecnico" />
+
+      <PedidosOrcamento aposAgendar={carregar} />
 
       {amanha.length > 0 && (
         <button className="cartao clicavel linha" onClick={() => setLembretes(true)}>

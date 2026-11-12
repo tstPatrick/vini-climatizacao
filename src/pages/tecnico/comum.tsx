@@ -29,11 +29,14 @@ export function LayoutTecnico() {
       try {
         const agora = new Date()
         const ate = new Date(agora.getTime() + 90 * 86_400_000)
-        const lista = await api.tecAgendamentos(agora.toISOString(), ate.toISOString())
-        const n = lista.filter((a) => a.status === 'pendente').length
+        const [lista, pedidos] = await Promise.all([
+          api.tecAgendamentos(agora.toISOString(), ate.toISOString()),
+          api.tecPedidos().catch(() => []),
+        ])
+        const n = lista.filter((a) => a.status === 'pendente').length + pedidos.filter((p) => p.status === 'novo').length
         if (!vivo) return
         if (anterior.current != null && n > anterior.current) {
-          toast('Novo pedido de agendamento!')
+          toast('Novo pedido!')
           if ('Notification' in window && Notification.permission === 'granted') {
             navigator.serviceWorker?.ready
               .then((r) => r.showNotification('Vini Climatização', { body: 'Novo pedido de agendamento pendente.', icon: `${import.meta.env.BASE_URL}icon-192.png` }))

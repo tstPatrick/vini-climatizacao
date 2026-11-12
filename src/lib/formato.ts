@@ -33,8 +33,9 @@ export function precoTexto(v: number | null): string {
 
 export const primeiroNome = (n: string) => n.trim().split(/\s+/)[0] ?? ''
 
-export function enderecoTexto(e: { rua: string; numero: string; bairro: string; complemento?: string }): string {
-  return [`${e.rua}${e.numero ? ', ' + e.numero : ''}`, e.complemento, e.bairro].filter(Boolean).join(' · ')
+export function enderecoTexto(e: { rua: string; numero: string; bairro: string; complemento?: string; cidade?: string }): string {
+  const cidade = e.cidade && e.cidade.trim().toLowerCase() !== 'salvador' ? e.cidade : ''
+  return [`${e.rua}${e.numero ? ', ' + e.numero : ''}`, e.complemento, e.bairro, cidade].filter(Boolean).join(' · ')
 }
 
 export function aparelhoTexto(a: { tipo: string; marca: string; btus: number | null } | null): string {
@@ -42,7 +43,7 @@ export function aparelhoTexto(a: { tipo: string; marca: string; btus: number | n
   return [a.tipo, a.marca, a.btus ? `${(a.btus / 1000).toLocaleString('pt-BR')} mil BTUs` : ''].filter(Boolean).join(' · ')
 }
 
-export function linkMapa(e: { rua: string; numero: string; bairro: string }): string {
-  const q = `${e.rua}, ${e.numero}, ${e.bairro}, Salvador - BA`
+export function linkMapa(e: { rua: string; numero: string; bairro: string; cidade?: string }): string {
+  const q = `${e.rua}, ${e.numero}, ${e.bairro}, ${e.cidade || 'Salvador'} - BA`
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
 }

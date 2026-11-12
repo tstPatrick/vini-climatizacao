@@ -47,9 +47,24 @@ export function MinhaAgenda() {
   return (
     <main className="tela">
       <Cabecalho titulo="Agenda" />
+      {(perfil?.pedidos ?? []).map((p) => (
+        <section key={p.id} className="cartao p coluna" aria-label="Pedido de orçamento">
+          <div className="linha">
+            <span className="icone-bola">
+              <Icone nome="orcamento" />
+            </span>
+            <div className="cresce coluna p">
+              <strong>Orçamento solicitado</strong>
+              <span className="mutado peq">{p.status === 'contatado' ? 'O técnico já entrou em contato.' : 'O técnico vai chamar você no WhatsApp.'}</span>
+            </div>
+            <span className="chip atencao">Aguardando</span>
+          </div>
+          <span className="peq">"{p.descricao}"</span>
+        </section>
+      ))}
       {!perfil ? (
         <ErroSemPerfil />
-      ) : lista.length === 0 ? (
+      ) : lista.length === 0 && (perfil.pedidos ?? []).length > 0 ? null : lista.length === 0 ? (
         <div className="cartao coluna centro">
           <p className="mutado">Nenhum agendamento futuro.</p>
           <Link className="btn btn-primario" to="/agendar" onClick={() => salvarRascunho({})}>

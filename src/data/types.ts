@@ -31,6 +31,8 @@ export interface Endereco {
   bairro: string
   complemento: string
   observacoes: string
+  /** Cidade (padrão: Salvador). */
+  cidade?: string
 }
 
 export interface Aparelho {
@@ -119,6 +121,34 @@ export interface PerfilCliente {
   enderecos: Endereco[]
   aparelhos: Aparelho[]
   agendamentos: AgendamentoDetalhado[]
+  /** Pedidos de orçamento em aberto. */
+  pedidos?: PedidoOrcamento[]
+}
+
+export type StatusPedido = 'novo' | 'contatado' | 'agendado' | 'dispensado'
+
+export interface PedidoOrcamento {
+  id: string
+  cliente_id: string
+  endereco_id: string
+  descricao: string
+  foto_url: string | null
+  status: StatusPedido
+  agendamento_id: string | null
+  criado_em: string
+}
+
+export interface PedidoDetalhado extends PedidoOrcamento {
+  cliente: Cliente
+  endereco: Endereco
+}
+
+export interface DadosPedidoOrcamento {
+  nome: string
+  whatsapp: string
+  endereco: Omit<Endereco, 'id' | 'cliente_id'> & { id?: string }
+  descricao: string
+  foto_url: string | null
 }
 
 export interface ClienteResumo {

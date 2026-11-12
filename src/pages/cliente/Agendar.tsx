@@ -39,7 +39,7 @@ export function EscolherServico() {
           </button>
         ))}
       </div>
-      <button className="btn btn-primario mt-auto" disabled={!r.servico_id} onClick={() => nav('/agendar/horario')}>
+      <button className="btn btn-primario mt-auto" disabled={!r.servico_id} onClick={() => nav(r.servico_id === 'orcamento' ? '/orcamento' : '/agendar/horario')}>
         Continuar
       </button>
     </main>

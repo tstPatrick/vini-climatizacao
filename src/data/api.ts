@@ -6,6 +6,8 @@ import type {
   ClienteResumo,
   DadosCliente,
   DadosConclusao,
+  DadosPedidoOrcamento,
+  PedidoDetalhado,
   Disponibilidade,
   NovoAgendamento,
   Ocupado,
@@ -37,6 +39,7 @@ export interface Api {
   clienteResponderRemarcacao(token: string, id: string, aceitar: boolean): Promise<void>
   clienteRemarcar(token: string, id: string, inicio: string): Promise<void>
   clienteCancelar(token: string, id: string): Promise<void>
+  pedirOrcamento(token: string | null, dados: DadosPedidoOrcamento): Promise<{ token: string; pedido_id: string }>
   /** Registra este aparelho para receber notificações (null no modo demonstração). */
   salvarPushCliente(token: string, inscricao: PushSubscriptionJSON): Promise<void>
 
@@ -57,6 +60,9 @@ export interface Api {
   tecClientes(): Promise<ClienteResumo[]>
   tecCliente(id: string): Promise<(PerfilCliente & { retornos: RetornoDetalhado[] }) | null>
   tecRetornos(): Promise<RetornoDetalhado[]>
+  tecPedidos(): Promise<PedidoDetalhado[]>
+  tecPedidoStatus(id: string, status: 'contatado' | 'dispensado'): Promise<void>
+  tecAgendarPedido(id: string, inicio: string): Promise<string>
   tecSalvarPush(inscricao: PushSubscriptionJSON): Promise<void>
   tecAtualizarRetorno(id: string, status: StatusRetorno): Promise<void>
   tecServicos(): Promise<Servico[]>

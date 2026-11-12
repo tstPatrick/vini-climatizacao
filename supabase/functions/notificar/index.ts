@@ -59,21 +59,55 @@ Deno.serve(async (req) => {
   if (!cfg?.segredo || req.headers.get('x-vini-segredo') !== cfg.segredo) {
     return new Response('não autorizado', { status: 401 })
   }
-  const { agendamento_id, evento } = await req.json().catch(() => ({}))
-  const { data: a } = await sb
-    .from('agendamentos')
-    .select('id, inicio, quantidade, cliente_id, servicos(nome), clientes(nome), enderecos(bairro, rua, numero)')
-    .eq('id', agendamento_id)
-    .single()
-  const msg = a && mensagem(evento, a)
-  if (!msg) return Response.json({ enviados: 0, motivo: 'sem mensagem' })
-
+  const corpo = await req.json().catch(() => ({}))
+  const { agendamento_id, pedido_id, evento } = corpo
+  let msg: { titulo: string; corpo: string; url: string } | null = null
+  let tag = ''
   let q = sb.from('push_inscricoes').select('*')
-  q = PARA_TECNICO.has(evento) ? q.eq('tecnico', true) : q.eq('cliente_id', a.cliente_id)
+
+  if (evento === 'orcamentos_pendentes') {
+    // Lembrete diário ao técnico enquanto houver pedido de orçamento sem contato.
+    const n = Number(corpo.total) || 1
+    msg = {
+      titulo: n === 1 ? '1 pedido de orçamento esperando contato' : `${n} pedidos de orçamento esperando contato`,
+      corpo: 'Toque para ver e chamar o cliente no WhatsApp.',
+      url: './#/tecnico',
+    }
+    tag = 'orcamentos-pendentes'
+    q = q.eq('tecnico', true)
+  } else if (pedido_id) {
+    const { data: p } = await sb
+      .from('pedidos_orcamento')
+      .select('id, descricao, clientes(nome), enderecos(bairro, cidade)')
+      .eq('id', pedido_id)
+      .single()
+    if (p) {
+      const d = (p.descricao ?? '').length > 70 ? p.descricao.slice(0, 70) + '…' : p.descricao
+      msg = {
+        titulo: 'Novo pedido de orçamento',
+        corpo: `${p.clientes?.nome ?? 'Cliente'} · ${p.enderecos?.bairro ?? ''} · ${p.enderecos?.cidade ?? ''}: "${d}"`,
+        url: './#/tecnico',
+      }
+      tag = `pedido-${p.id}`
+    }
+    q = q.eq('tecnico', true)
+  } else {
+    const { data: a } = await sb
+      .from('agendamentos')
+      .select('id, inicio, quantidade, cliente_id, servicos(nome), clientes(nome), enderecos(bairro, rua, numero)')
+      .eq('id', agendamento_id)
+      .single()
+    msg = a && mensagem(evento, a)
+    if (a) {
+      tag = `ag-${a.id}`
+      q = PARA_TECNICO.has(evento) ? q.eq('tecnico', true) : q.eq('cliente_id', a.cliente_id)
+    }
+  }
+  if (!msg) return Response.json({ enviados: 0, motivo: 'sem mensagem' })
   const { data: inscricoes } = await q
 
   webpush.setVapidDetails(cfg.contato || 'https://vini-climatizacao.eservicos.workers.dev', cfg.vapid_publica, cfg.vapid_privada)
-  const payload = JSON.stringify({ ...msg, tag: `ag-${a.id}` })
+  const payload = JSON.stringify({ ...msg, tag })
   let enviados = 0
   const erros: string[] = []
   for (const i of inscricoes ?? []) {

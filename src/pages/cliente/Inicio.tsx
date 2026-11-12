@@ -108,7 +108,7 @@ export function Inicio() {
       </section>
 
       {config.servicos.some((s) => s.id === 'orcamento') && (
-        <button className="cartao clicavel p linha" style={{ minHeight: 64 }} onClick={() => agendar('orcamento')}>
+        <button className="cartao clicavel p linha" style={{ minHeight: 64 }} onClick={() => nav('/orcamento')}>
           <span className="icone-bola">
             <Icone nome="orcamento" />
           </span>

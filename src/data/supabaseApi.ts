@@ -71,6 +71,8 @@ export function criarSupabaseApi(url: string, chave: string): Api {
     clienteResponderRemarcacao: (token, id, aceitar) => rpc('cliente_responder_remarcacao', { p_token: token, p_id: id, p_aceitar: aceitar }),
     clienteRemarcar: (token, id, inicio) => rpc('cliente_remarcar', { p_token: token, p_id: id, p_inicio: inicio }),
     clienteCancelar: (token, id) => rpc('cliente_cancelar', { p_token: token, p_id: id }),
+    pedirOrcamento: (token, dados) =>
+      rpc('pedir_orcamento', { p_token: token, p_dados: { ...dados, whatsapp: normalizarWhats(dados.whatsapp) } }),
     salvarPushCliente: (token, inscricao) => rpc('salvar_push_cliente', { p_token: token, p_inscricao: inscricao }),
 
     async login(email, senha) {
@@ -127,6 +129,9 @@ export function criarSupabaseApi(url: string, chave: string): Api {
       return p && p.cliente ? { ...perfil(p)!, retornos: p.retornos } : null
     },
     tecRetornos: () => rpc('tec_retornos'),
+    tecPedidos: () => rpc('tec_pedidos_orcamento'),
+    tecPedidoStatus: (id, status) => rpc('tec_pedido_status', { p_id: id, p_status: status }),
+    tecAgendarPedido: (id, inicio) => rpc('tec_agendar_pedido', { p_id: id, p_inicio: inicio }),
     tecSalvarPush: (inscricao) => rpc('tec_salvar_push', { p_inscricao: inscricao }),
     async tecAtualizarRetorno(id, status) {
       await ok(sb.from('retornos').update({ status }).eq('id', id))
@@ -153,7 +158,7 @@ export function criarSupabaseApi(url: string, chave: string): Api {
 }
 
 const LEITURA = new Set([
-  'horarios_ocupados', 'entrar_cliente', 'perfil_cliente', 'eh_tecnico',
+  'tec_pedidos_orcamento', 'horarios_ocupados', 'entrar_cliente', 'perfil_cliente', 'eh_tecnico',
   'tec_agendamentos', 'tec_agendamento', 'tec_clientes', 'tec_cliente', 'tec_retornos',
 ])
 

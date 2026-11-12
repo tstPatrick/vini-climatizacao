@@ -15,6 +15,7 @@ import type {
   ClienteResumo,
   Disponibilidade,
   Endereco,
+  PedidoOrcamento,
   Retorno,
   RetornoDetalhado,
   Servico,
@@ -36,6 +37,7 @@ interface Banco {
   disponibilidade: Disponibilidade[]
   bloqueios: Bloqueio[]
   ajustes: Ajustes
+  pedidos?: PedidoOrcamento[]
 }
 
 const CHAVE = 'vini-demo-banco'
@@ -131,7 +133,11 @@ function semente(): Banco {
 function ler(): Banco {
   try {
     const s = localStorage.getItem(CHAVE)
-    if (s) return JSON.parse(s) as Banco
+    if (s) {
+      const b = JSON.parse(s) as Banco
+      b.pedidos ??= []
+      return b
+    }
   } catch {
     /* ignora */
   }
@@ -253,7 +259,50 @@ export function criarLocalApi(): Api {
           .filter((a) => a.cliente_id === c.id)
           .map((a) => detalhar(b, a))
           .sort((x, y) => (x.inicio < y.inicio ? 1 : -1)),
+        pedidos: (b.pedidos ?? [])
+          .filter((p) => p.cliente_id === c.id && (p.status === 'novo' || p.status === 'contatado'))
+          .sort((x, y) => (x.criado_em < y.criado_em ? 1 : -1)),
       }
+    },
+
+    async pedirOrcamento(token, dados) {
+      await espera()
+      const b = ler()
+      const whatsapp = normalizarWhats(dados.whatsapp)
+      if (whatsapp.length < 12) throw new ErroApp('Informe um WhatsApp válido com DDD.')
+      if (!dados.nome.trim()) throw new ErroApp('Informe seu nome.')
+      if (!dados.endereco.rua.trim() || !dados.endereco.bairro.trim() || !(dados.endereco.cidade ?? '').trim())
+        throw new ErroApp('Informe rua, bairro e cidade.')
+      if (!dados.descricao.trim()) throw new ErroApp('Conte o que você precisa.')
+      let c = token ? b.clientes.find((x) => x.token === token) : undefined
+      c ??= b.clientes.find((x) => x.whatsapp === whatsapp)
+      if (!c) {
+        c = { id: id(), nome: dados.nome.trim(), whatsapp, criado_em: agoraIso(), token: id() }
+        b.clientes.push(c)
+      }
+      c.nome = dados.nome.trim()
+      c.whatsapp = whatsapp
+      const cid = c.id
+      const { id: eid, ...end } = dados.endereco
+      let e = eid ? b.enderecos.find((x) => x.id === eid && x.cliente_id === cid) : undefined
+      if (e) Object.assign(e, end)
+      else {
+        e = { id: id(), cliente_id: cid, ...end }
+        b.enderecos.push(e)
+      }
+      const p: PedidoOrcamento = {
+        id: id(),
+        cliente_id: cid,
+        endereco_id: e.id,
+        descricao: dados.descricao.trim(),
+        foto_url: dados.foto_url,
+        status: 'novo',
+        agendamento_id: null,
+        criado_em: agoraIso(),
+      }
+      ;(b.pedidos ??= []).push(p)
+      gravar(b)
+      return { token: c.token, pedido_id: p.id }
     },
 
     async salvarDadosCliente(token, dados) {
@@ -489,6 +538,51 @@ export function criarLocalApi(): Api {
         .filter((r) => r.status === 'pendente' || r.status === 'avisado')
         .map((r) => detalharRetorno(b, r))
         .sort((x, y) => (x.data_prevista < y.data_prevista ? -1 : 1))
+    },
+
+    async tecPedidos() {
+      exigirTecnico()
+      const b = ler()
+      return (b.pedidos ?? [])
+        .filter((p) => p.status === 'novo' || p.status === 'contatado')
+        .sort((x, y) => (x.criado_em < y.criado_em ? -1 : 1))
+        .map((p) => {
+          const { token: _t, ...cliente } = b.clientes.find((c) => c.id === p.cliente_id)!
+          return { ...p, cliente, endereco: b.enderecos.find((e) => e.id === p.endereco_id)! }
+        })
+    },
+
+    async tecPedidoStatus(pid, status) {
+      exigirTecnico()
+      const b = ler()
+      const p = (b.pedidos ?? []).find((x) => x.id === pid)
+      if (p && (p.status === 'novo' || (p.status === 'contatado' && status === 'dispensado'))) p.status = status
+      gravar(b)
+    },
+
+    async tecAgendarPedido(pid, inicio) {
+      exigirTecnico()
+      const b = ler()
+      const p = (b.pedidos ?? []).find((x) => x.id === pid && (x.status === 'novo' || x.status === 'contatado'))
+      if (!p) throw new ErroApp('Pedido não encontrado ou já resolvido.')
+      const h = validarHorario(b, 'orcamento', inicio)
+      const a: Agendamento = {
+        id: id(),
+        cliente_id: p.cliente_id,
+        servico_id: 'orcamento',
+        endereco_id: p.endereco_id,
+        aparelho_id: null,
+        ...h,
+        status: 'confirmado',
+        observacao_cliente: p.descricao,
+        quantidade: 1,
+        criado_em: agoraIso(),
+      }
+      b.agendamentos.push(a)
+      p.status = 'agendado'
+      p.agendamento_id = a.id
+      gravar(b)
+      return a.id
     },
 
     async tecAtualizarRetorno(rid, status) {
