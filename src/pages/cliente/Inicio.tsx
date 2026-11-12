@@ -107,6 +107,16 @@ export function Inicio() {
         </button>
       </section>
 
+      {config.servicos.some((s) => s.id === 'orcamento') && (
+        <button className="cartao clicavel p linha" style={{ minHeight: 64 }} onClick={() => agendar('orcamento')}>
+          <span className="icone-bola">
+            <Icone nome="orcamento" />
+          </span>
+          <strong className="cresce">Peça já seu orçamento.</strong>
+          <Icone nome="direita" style={{ color: 'var(--acao)' }} />
+        </button>
+      )}
+
       <section className="atalhos" aria-label="Serviços">
         {config.servicos
           .filter((s) => s.id !== 'orcamento')
